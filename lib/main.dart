@@ -46,6 +46,7 @@ class M extends StatelessWidget {
 }
 
 class H extends StatefulWidget {
+  /// TODO COLOR PALETTE https://coolors.co/56c450-454851-3454d1-ffffff-34d1bf
   List<String> savedItems = [
     '4',
     'Rosmary Spices',
@@ -150,9 +151,10 @@ class _H extends State<H> {
                 return Container(
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: Image.network(
+                      backgroundImage: _ready ? null : Image.network(
                         widget.savedItems[4 * index + 2],
                       ).image,
+                      child: _ready ? CircularProgressIndicator() : null,
                     ),
                     title: Text(widget.savedItems[4 * index + 1]),
                     subtitle: Text(widget.savedItems[4 * index] + ' days left!'),
