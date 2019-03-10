@@ -47,6 +47,7 @@ class M extends StatelessWidget {
 
 class H extends StatefulWidget {
   /// TODO COLOR PALETTE https://coolors.co/56c450-454851-3454d1-ffffff-34d1bf
+  /// TODO FLARE ASSETS https://www.2dimensions.com/a/tamiyo/files/flare/new-file-2
   List<String> savedItems = [
     '4',
     'Rosmary Spices',
