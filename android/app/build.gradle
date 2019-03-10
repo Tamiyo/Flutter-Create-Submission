@@ -34,6 +34,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "devstream.tamiyo.create_competiton"
+        multiDexEnabled true
         minSdkVersion 16
         targetSdkVersion 28
         versionCode flutterVersionCode.toInteger()
@@ -58,7 +59,9 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+//    implementation 'com.google.android.gms:play-services-vision-common:16.2.0'
     implementation 'com.google.firebase:firebase-ml-vision:19.0.2'
+//    implementation 'com.google.firebase:firebase-ml-common:16.1.4'
     implementation 'com.google.firebase:firebase-core:16.0.7'
 }
 
