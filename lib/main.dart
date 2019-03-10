@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
+import 'package:progress_hud/progress_hud.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 
@@ -50,121 +51,51 @@ class H extends StatefulWidget {
     'Rosmary Spices',
     'https://cdn.shopify.com/s/files/1/1225/3182/products/rosemary-tea-top-close.jpg?v=1504589423',
     '2134001239012',
+    '4',
+    'Rosmary Spices',
+    'https://cdn.shopify.com/s/files/1/1225/3182/products/rosemary-tea-top-close.jpg?v=1504589423',
+    '2134001239012',
+    '4',
+    'Rosmary Spices',
+    'https://cdn.shopify.com/s/files/1/1225/3182/products/rosemary-tea-top-close.jpg?v=1504589423',
+    '2134001239012',
   ];
-
-  final BarcodeDetector barcodeDetector =
-      FirebaseVision.instance.barcodeDetector();
 
   @override
   _H createState() => _H();
 }
 
 class _H extends State<H> {
+  final BarcodeDetector barcodeDetector =
+      FirebaseVision.instance.barcodeDetector();
+
+  ProgressHUD _progressHUD;
+
   bool _ready = false;
+  bool _detected;
 
   Future getImage() async {
     final File image = await ImagePicker.pickImage(source: ImageSource.camera);
 
-    showDialog(
-        context: this.context,
-        builder: (BuildContext context) {
-          return D(
-            image: image,
-            barcodeDetector: widget.barcodeDetector,
-            savedItems: widget.savedItems,
-          );
-        });
-  }
-
-  void _G() async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-//    widget.savedItems = preferences.getStringList('user-data');
-
     setState(() {
-      _ready = true;
+      _progressHUD.state.show();
     });
-  }
 
-  @override
-  void initState() {
-    _G();
-    super.initState();
-  }
-
-  @override
-  Widget build(context) {
-    return Scaffold(
-      appBar: AppBar(),
-      backgroundColor: Color.fromRGBO(255, 204, 102, 1),
-      body: Center(
-        child: ListView.separated(
-          itemCount: (widget.savedItems.length / 4).floor(),
-          padding: EdgeInsets.all(8.0),
-          itemBuilder: (BuildContext context, int index) {
-            return Container(
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: Image.network(
-                    widget.savedItems[4 * index + 2],
-                  ).image,
-                ),
-                title: Text(widget.savedItems[4 * index + 1]),
-                subtitle: Text(widget.savedItems[4 * index] + ' days left!'),
-                onTap: () {
-                  /// TODO Implement onTap -> DetailsPage
-//                    savedItems[4 * index + 2]
-                },
-                trailing: IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () {
-                      widget.savedItems.removeRange(index, index + 3);
-                      setState(() {});
-                    }),
-              ),
-              color: Colors.white,
-            );
-          },
-          separatorBuilder: (BuildContext context, int index) => Divider(),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: getImage,
-        icon: Icon(Icons.camera),
-        label: Text('Scan Barcode'),
-      ),
-    );
-  }
-}
-
-class D extends StatefulWidget {
-  D({this.image, this.barcodeDetector, this.savedItems});
-
-  List<String> savedItems;
-  File image;
-  BarcodeDetector barcodeDetector;
-
-  @override
-  _D createState() => _D(image: image, barcodeDetector: barcodeDetector);
-}
-
-class _D extends State<D> {
-  _D({this.image, this.barcodeDetector});
-
-  File image;
-  BarcodeDetector barcodeDetector;
-
-  bool _ready = false;
-  bool _detected = true;
-
-  void _g() async {
-    final List<Barcode> barcodes = await barcodeDetector
-        .detectInImage(FirebaseVisionImage.fromFile(image));
+    List<Barcode> barcodes;
+    image != null
+        ? barcodes = await barcodeDetector
+            .detectInImage(FirebaseVisionImage.fromFile(image))
+        : barcodes = [];
 
     if (barcodes.length < 1) {
       _detected = false;
     } else {
       print(barcodes[0].rawValue);
     }
+
+    setState(() {
+      _progressHUD.state.dismiss();
+    });
 
     if (_detected) {
       Navigator.push(context,
@@ -181,30 +112,75 @@ class _D extends State<D> {
     });
   }
 
+  void _G() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+//    widget.savedItems = preferences.getStringList('user-data');
+
+    setState(() {
+      _ready = true;
+    });
+  }
+
   @override
   void initState() {
-    _g();
+    _progressHUD = new ProgressHUD(
+      backgroundColor: Colors.black12,
+      loading: false,
+      color: Colors.white,
+      containerColor: Colors.blue,
+      borderRadius: 5.0,
+      text: 'Loading...',
+    );
+    _G();
     super.initState();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: _ready
-          ? (_detected
-              ? Text(
-                  'Image Loaded!',
-                  textAlign: TextAlign.center,
-                )
-              : Text(
-                  'Image Failed To Load!\nTry Again!',
-                  textAlign: TextAlign.center,
-                ))
-          : Text(
-              'Processing...',
-              textAlign: TextAlign.center,
+  Widget build(context) {
+    return Scaffold(
+      appBar: AppBar(),
+      backgroundColor: Color.fromRGBO(255, 204, 102, 1),
+      body: Stack(
+        children: <Widget>[
+          Center(
+            child: ListView.separated(
+              itemCount: (widget.savedItems.length / 4).floor(),
+              padding: EdgeInsets.all(8.0),
+              itemBuilder: (BuildContext context, int index) {
+                return Container(
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: Image.network(
+                        widget.savedItems[4 * index + 2],
+                      ).image,
+                    ),
+                    title: Text(widget.savedItems[4 * index + 1]),
+                    subtitle: Text(widget.savedItems[4 * index] + ' days left!'),
+                    onTap: () {
+                      /// TODO Implement onTap -> DetailsPage
+//                    savedItems[4 * index + 2]
+                    },
+                    trailing: IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () {
+                          widget.savedItems.removeRange(index, index + 4);
+                          setState(() {});
+                        }),
+                  ),
+                  color: Colors.white,
+                );
+              },
+              separatorBuilder: (BuildContext context, int index) => Divider(),
             ),
-      content: _ready ? null : LinearProgressIndicator(),
+          ),
+          _progressHUD
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: getImage,
+        icon: Icon(Icons.camera),
+        label: Text('Scan Barcode'),
+      ),
     );
   }
 }
@@ -228,15 +204,15 @@ class _C extends State<C> {
   bool _ready = false;
 
   void _G() async {
-    var response = await http.get(
-        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        });
-
-    print(response.body);
-    data = json.decode(response.body);
+//    var response = await http.get(
+//        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
+//        headers: {
+//          'Content-Type': 'application/json',
+//          'Accept': 'application/json'
+//        });
+//
+//    print(response.body);
+//    data = json.decode(response.body);
     setState(() {
       _ready = true;
     });
