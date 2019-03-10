@@ -74,7 +74,7 @@ class _H extends State<H> {
   ProgressHUD _progressHUD;
 
   bool _ready = false;
-  bool _detected;
+  bool _detected = true;
 
   Future getImage() async {
     final File image = await ImagePicker.pickImage(source: ImageSource.camera);
@@ -152,13 +152,16 @@ class _H extends State<H> {
                 return Container(
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: _ready ? null : Image.network(
-                        widget.savedItems[4 * index + 2],
-                      ).image,
+                      backgroundImage: _ready
+                          ? null
+                          : Image.network(
+                              widget.savedItems[4 * index + 2],
+                            ).image,
                       child: _ready ? CircularProgressIndicator() : null,
                     ),
                     title: Text(widget.savedItems[4 * index + 1]),
-                    subtitle: Text(widget.savedItems[4 * index] + ' days left!'),
+                    subtitle:
+                        Text(widget.savedItems[4 * index] + ' days left!'),
                     onTap: () {
                       /// TODO Implement onTap -> DetailsPage
 //                    savedItems[4 * index + 2]
@@ -206,16 +209,54 @@ class _C extends State<C> {
 
   bool _ready = false;
 
+  Future<String> _convertToUPCA(String UPCE) async {
+    String manufacturerType = UPCE[6];
+    String UPCA = "0";
+
+    switch (manufacturerType) {
+      case "0":
+      case "1":
+      case "2":
+        UPCA += UPCE[1] +
+            UPCE[2] +
+            UPCE[6] +
+            '0000' +
+            UPCE.substring(3, 6) +
+            UPCE[7];
+        break;
+      case "3":
+        UPCA += UPCE.substring(1, 4) + '00000' + UPCE.substring(4, 6) + UPCE[7];
+        break;
+      case "4":
+        UPCA += UPCE.substring(1, 5) + '00000' + UPCE[5] + UPCE[7];
+        break;
+      case "5":
+      case "6":
+      case "7":
+      case "8":
+      case "9":
+        UPCA += UPCE.substring(1, 6) + '0000' + UPCE[6] + UPCE[7];
+    }
+
+    return UPCA;
+  }
+
   void _G() async {
-//    var response = await http.get(
-//        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
-//        headers: {
-//          'Content-Type': 'application/json',
-//          'Accept': 'application/json'
-//        });
-//
-//    print(response.body);
-//    data = json.decode(response.body);
+    if (upc.length < 12) {
+      upc = await _convertToUPCA(upc);
+      print("Converted UPCA: " + upc);
+    }
+
+    var response = await http.get(
+        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        });
+
+    print(response.body);
+    data = json.decode(response.body);
+
     setState(() {
       _ready = true;
     });
@@ -231,19 +272,18 @@ class _C extends State<C> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: Container(
+      body: _ready ? Container(
         color: Color.fromRGBO(255, 255, 255, 1.0),
         padding: EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
-            Text(
-                'Sam\'s Choice Himalayan Pink Salt: Great for seasoning meat and vegetable plates'),
+            Text(data['items'][0]['title']),
             Divider(
               color: Colors.transparent,
             ),
             Image.network(
-              'https://i5.walmartimages.com/asr/489aab95-19e0-483b-bc6e-61ba2198be13_2.fe847f38d8f37ecd320145b8fba64dd4.jpeg?odnHeight=450&odnWidth=450&odnBg=ffffff',
+              data['items'][0]['images'][0],
               fit: BoxFit.cover,
               scale: 1.5,
             ),
@@ -253,8 +293,9 @@ class _C extends State<C> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Text('Average Price: \$3.98'),
-                Text('UPC: 0078742245867')
+                Text('Average Price: \$' +
+                    data['items'][0]['lowest_recorded_price']),
+                Text('UPC: ' + data['items'][0]['upc'])
               ],
             ),
             Row(
@@ -303,8 +344,8 @@ class _C extends State<C> {
               ],
             )
           ],
-        ),
-      ),
+        )
+      ) : CircularProgressIndicator()
     );
   }
 }
