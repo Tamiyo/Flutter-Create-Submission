@@ -177,7 +177,7 @@ class _H extends State<H> {
                               widget.savedItems[4 * index + 2],
                             ).image
                           : null,
-                      child: _ready ? CircularProgressIndicator() : null,
+                      child: _ready ? null : CircularProgressIndicator(),
                     ),
                     title: Text(widget.savedItems[4 * index + 1]),
                     subtitle:
