@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:splashscreen/splashscreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+//import 'package:splashscreen/splashscreen.dart';
+import 'package:flare_flutter/flare_actor.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -19,27 +22,44 @@ class M extends StatelessWidget {
   @override
   Widget build(context) {
     return MaterialApp(
-      home: SplashScreen(
-        seconds: 2,
-        backgroundColor: Color.fromRGBO(255, 204, 102, 1),
-        navigateAfterSeconds: H(),
-        title: Text(
-          '{ spectacle } ',
-          style: TextStyle(
-            fontSize: 48.0,
-            fontFamily: 'AbrilFatface',
-            letterSpacing: 1.5,
+      home: SplashScreen(),
+    );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  _SplashScreenState createState() => new _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  startCountdown() async {
+    var _duration = new Duration(seconds: 3);
+    return new Timer(_duration, () {
+      Navigator.of(context)
+          .pushReplacement(new MaterialPageRoute(builder: (context) {
+        return H();
+      }));
+    });
+  }
+
+  @override
+  void initState() {
+    startCountdown();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: <Widget>[
+          FlareActor(
+            'assets/splash_background.flr',
+            alignment: Alignment.center,
+            fit: BoxFit.contain,
+            animation: 'Apple',
           ),
-          textAlign: TextAlign.center,
-        ),
-        loadingText: Text(
-          'discover excellence',
-          style: TextStyle(
-              fontFamily: 'OpenSans',
-              fontSize: 18.0,
-              fontStyle: FontStyle.italic),
-          textAlign: TextAlign.center,
-        ),
+        ],
       ),
     );
   }
@@ -153,10 +173,10 @@ class _H extends State<H> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundImage: _ready
-                          ? null
-                          : Image.network(
+                          ? Image.network(
                               widget.savedItems[4 * index + 2],
-                            ).image,
+                            ).image
+                          : null,
                       child: _ready ? CircularProgressIndicator() : null,
                     ),
                     title: Text(widget.savedItems[4 * index + 1]),
@@ -242,20 +262,38 @@ class _C extends State<C> {
   }
 
   void _G() async {
-    if (upc.length < 12) {
-      upc = await _convertToUPCA(upc);
-      print("Converted UPCA: " + upc);
-    }
-
-    var response = await http.get(
-        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        });
-
-    print(response.body);
-    data = json.decode(response.body);
+    data = {
+      'items': [
+        {
+          'ean': 0078742040370,
+          'title':
+              'Primal Strips Meatless Vegan Jerky-Variety Gift Pack Sampler; 24 Assorted 1 Ounce Strips',
+          'description': 'This is a description',
+          'upc': 078742040370,
+          'asin': 'B00L9IS504',
+          'brand': 'Primal Spirit Food, Inc.',
+          'model': null,
+          'lowest_recorded_price': 9.99,
+          'highest_recorded_price': 174.99,
+          'images': [],
+          'elid': 283158252884
+        }
+      ]
+    };
+//    if (upc.length < 12) {
+//      upc = await _convertToUPCA(upc);
+//      print("Converted UPCA: " + upc);
+//    }
+//
+//    var response = await http.get(
+//        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
+//        headers: {
+//          'Content-Type': 'application/json',
+//          'Accept': 'application/json'
+//        });
+//
+//    data = json.decode(response.body);
+//    print('Items: ' + data['items'].toString());
 
     setState(() {
       _ready = true;
@@ -271,81 +309,86 @@ class _C extends State<C> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      body: _ready ? Container(
-        color: Color.fromRGBO(255, 255, 255, 1.0),
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            Text(data['items'][0]['title']),
-            Divider(
-              color: Colors.transparent,
-            ),
-            Image.network(
-              data['items'][0]['images'][0],
-              fit: BoxFit.cover,
-              scale: 1.5,
-            ),
-            Divider(
-              color: Colors.transparent,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text('Average Price: \$' +
-                    data['items'][0]['lowest_recorded_price']),
-                Text('UPC: ' + data['items'][0]['upc'])
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Flexible(
-                  flex: 1,
-                  child: DateTimePickerFormField(
-                    inputType: InputType.date,
-                    onChanged: (d) {
-                      expirationDate = d;
-                    },
-                    format: DateFormat('yyyy-MM-dd'),
-                    editable: false,
-                    decoration: InputDecoration(
-                      labelText: 'Expiration Date',
-                      counterText: 'Expiration Date',
-                      hasFloatingPlaceholder: false,
+        appBar: AppBar(),
+        body: _ready
+            ? Container(
+                color: Color.fromRGBO(255, 255, 255, 1.0),
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    Text(data['items'][0]['title'].toString()),
+                    Divider(
+                      color: Colors.transparent,
                     ),
-                  ),
-                ),
-                Flexible(
-                  flex: 1,
-                  child: MaterialButton(
-                    onPressed: () {
-                      /// TODO Note the way this is setup
-                      /// 1. Days Left TODO Parse this value
-                      /// 2. Name
-                      /// 3. ImageURL
+                    Image.network(
+                      data['items'][0]['images'].length > 0
+                          ? data['items'][0]['images'][0].toString()
 
-                      widget.savedItems
-                        ..add(expirationDate
-                            .difference(DateTime.now())
-                            .inDays
-                            .toString())
-                        ..add(data['items'][0]['title'])
-                        ..add(data['items'][0]['images'][0])
-                        ..add(upc);
+                          /// TODO Change to null image hosted @ Cloud Firestore
+                          : 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/NA_cap_icon.svg/423px-NA_cap_icon.svg.png',
+                      fit: BoxFit.cover,
+                      scale: 1.5,
+                    ),
+                    Divider(
+                      color: Colors.transparent,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text('Average Price: \$' +
+                            data['items'][0]['lowest_recorded_price']
+                                .toString()),
+                        Text('UPC: ' + data['items'][0]['upc'].toString())
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Flexible(
+                          flex: 1,
+                          child: DateTimePickerFormField(
+                            inputType: InputType.date,
+                            onChanged: (d) {
+                              expirationDate = d;
+                            },
+                            format: DateFormat('yyyy-MM-dd'),
+                            editable: false,
+                            decoration: InputDecoration(
+                              labelText: 'Expiration Date',
+                              counterText: 'Expiration Date',
+                              hasFloatingPlaceholder: false,
+                            ),
+                          ),
+                        ),
+                        Flexible(
+                          flex: 1,
+                          child: MaterialButton(
+                            onPressed: () {
+                              /// TODO Note the way this is setup
+                              /// 1. Days Left TODO Parse this value
+                              /// 2. Name
+                              /// 3. ImageURL
 
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('Submit'),
-                    color: Colors.amber,
-                  ),
-                )
-              ],
-            )
-          ],
-        )
-      ) : CircularProgressIndicator()
-    );
+                              widget.savedItems
+                                ..add(expirationDate
+                                    .difference(DateTime.now())
+                                    .inDays
+                                    .toString())
+                                ..add(data['items'][0]['title'])
+                                ..add(data['items'][0]['images'][0])
+                                ..add(upc);
+
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('Submit'),
+                            color: Colors.amber,
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                ))
+            : CircularProgressIndicator());
   }
 }
