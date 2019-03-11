@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-//import 'package:splashscreen/splashscreen.dart';
 import 'package:flare_flutter/flare_actor.dart';
 
 import 'package:http/http.dart' as http;
@@ -14,8 +13,9 @@ import 'package:http/http.dart' as http;
 import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:progress_hud/progress_hud.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 
 void main() => runApp(M());
@@ -25,6 +25,10 @@ class M extends StatelessWidget {
   Widget build(context) {
     return MaterialApp(
       home: SplashScreen(),
+      theme: ThemeData(
+        primaryColor: Colors.green,
+        accentColor: Colors.green,
+      ),
     );
   }
 }
@@ -93,16 +97,17 @@ class _H extends State<H> {
   final BarcodeDetector barcodeDetector =
       FirebaseVision.instance.barcodeDetector();
 
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      new FlutterLocalNotificationsPlugin();
 
   ProgressHUD _progressHUD;
   SharedPreferences preferences;
 
   bool _ready = false;
-  bool _detected = true;
 
   Future getImage() async {
     final File image = await ImagePicker.pickImage(source: ImageSource.camera);
+    bool _detected = true;
 
     setState(() {
       _progressHUD.state.show();
@@ -116,6 +121,7 @@ class _H extends State<H> {
 
     if (barcodes.length < 1) {
       _detected = false;
+      print('Barcode Detection Failed');
     } else {
       print(barcodes[0].rawValue);
     }
@@ -130,30 +136,20 @@ class _H extends State<H> {
         return C(
           upc: barcodes[0].rawValue,
           savedItems: widget.savedItems,
+          flutterLocalNotificationsPlugin: flutterLocalNotificationsPlugin,
         );
       }));
     }
-
-    setState(() {
-      _ready = true;
-    });
   }
 
   void _G() async {
     preferences = await SharedPreferences.getInstance();
 
-    /// TODO Register Token w/ Firestore when used!
-    String token = await _firebaseMessaging.getToken();
-    print('messaging token: ' + token);
-
-    _firebaseMessaging.configure(
-        onMessage: (Map<String, dynamic> message) async {
-      print('on message $message');
-    }, onResume: (Map<String, dynamic> message) async {
-      print('on resume $message');
-    }, onLaunch: (Map<String, dynamic> message) async {
-      print('on launch $message');
-    });
+    var initializationSettingsAndroid =
+        new AndroidInitializationSettings('@mipmap/ic_launcher');
+    var initializationSettings =
+        new InitializationSettings(initializationSettingsAndroid, null);
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
     widget.savedItems = preferences.getStringList('user-data') ?? [];
     setState(() {
@@ -199,9 +195,14 @@ class _H extends State<H> {
                           : null,
                       child: _ready ? null : CircularProgressIndicator(),
                     ),
-                    title: Text(widget.savedItems[4 * index + 1]),
-                    subtitle:
-                        Text(widget.savedItems[4 * index] + ' days left!'),
+                    title: Text(widget.savedItems[4 * index + 1], maxLines: 2,),
+                    subtitle: Row(children: <Widget>[
+                      Text('0'),
+                      /// If percent is < 0 .3 change to red
+                      LinearPercentIndicator(width: 200, percent: 0.5, progressColor: Colors.red,),
+                      Text('3')
+                    ],),
+//                        Text(widget.savedItems[4 * index] + ' days left!'),
                     onTap: () {
                       /// TODO Implement onTap -> DetailsPage
 //                    savedItems[4 * index + 2]
@@ -230,10 +231,10 @@ class _H extends State<H> {
                                       child: Text('Remove'),
                                       color: Colors.green,
                                       onPressed: () {
-                                        preferences.setStringList(
-                                            'user-data', widget.savedItems);
                                         widget.savedItems.removeRange(
                                             4 * index, 4 * index + 4);
+                                        preferences.setStringList(
+                                            'user-data', widget.savedItems);
                                         Navigator.pop(context);
                                       },
                                     ),
@@ -248,6 +249,7 @@ class _H extends State<H> {
               },
               separatorBuilder: (BuildContext context, int index) => Divider(
                     color: Colors.transparent,
+                height: 8.0,
                   ),
             ),
           ),
@@ -264,9 +266,15 @@ class _H extends State<H> {
 }
 
 class C extends StatefulWidget {
-  C({this.upc, this.savedItems});
+  C(
+      {this.upc,
+      this.savedItems,
+      this.fcm,
+      this.flutterLocalNotificationsPlugin});
 
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   String upc;
+  String fcm;
   List<String> savedItems;
 
   _C createState() => new _C(upc: upc);
@@ -337,21 +345,21 @@ class _C extends State<C> {
         }
       ]
     };
-    if (upc.length < 12) {
-      upc = await _convertToUPCA(upc);
-      print("Converted UPCA: " + upc);
-    }
-
-    var response = await http.get(
-        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        });
-
-    data = json.decode(response.body);
-    print('Body: ' + data.toString());
-    print('Items: ' + data['items'].toString());
+//    if (upc.length < 12) {
+//      upc = await _convertToUPCA(upc);
+//      print("Converted UPCA: " + upc);
+//    }
+//
+//    var response = await http.get(
+//        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
+//        headers: {
+//          'Content-Type': 'application/json',
+//          'Accept': 'application/json'
+//        });
+//
+//    data = json.decode(response.body);
+//    print('Body: ' + data.toString());
+//    print('Items: ' + data['items'].toString());
 
     setState(() {
       _ready = true;
@@ -421,7 +429,7 @@ class _C extends State<C> {
                         Flexible(
                           flex: 1,
                           child: MaterialButton(
-                            onPressed: () {
+                            onPressed: () async {
                               /// TODO Note the way this is setup
                               /// 1. Days Left TODO Parse this value
                               /// 2. Name
@@ -433,11 +441,47 @@ class _C extends State<C> {
                                     .inDays
                                     .toString())
                                 ..add(data['items'][0]['title'])
-                                ..add(data['items'][0]['images'][0])
+                                ..add(data['items'][0]['images'].length > 0
+                                    ? data['items'][0]['images'][0]
+
+                                    /// TODO Change this hardcoded value to something on Firestore...
+                                    : 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/NA_cap_icon.svg/423px-NA_cap_icon.svg.png')
                                 ..add(upc);
 
                               preferences.setStringList(
                                   'user-data', widget.savedItems);
+
+                              print('Days Diff: ' +
+                                  (new Duration(
+                                          days: expirationDate
+                                              .difference(DateTime.now())
+                                              .inDays)
+                                      .toString()));
+
+                              var scheduledNotificationDateTime =
+                                  new DateTime.now().add(new Duration(
+                                      days: expirationDate
+                                          .difference(DateTime.now())
+                                          .inDays));
+                              var androidPlatformChannelSpecifics =
+                                  new AndroidNotificationDetails(
+                                      'Eden-Push-Notifications',
+                                      'Push Notifications',
+                                      'Push Notifications about your Eden food items!',
+                                      priority: Priority.High,
+                                      channelAction:
+                                          AndroidNotificationChannelAction
+                                              .CreateIfNotExists);
+                              NotificationDetails platformChannelSpecifics =
+                                  new NotificationDetails(
+                                      androidPlatformChannelSpecifics, null);
+                              await widget.flutterLocalNotificationsPlugin
+                                  .schedule(
+                                      0,
+                                      'Eden Test!',
+                                      'Eden Test scheduled body',
+                                      scheduledNotificationDateTime,
+                                      platformChannelSpecifics);
 
                               Navigator.of(context).pop();
                             },
