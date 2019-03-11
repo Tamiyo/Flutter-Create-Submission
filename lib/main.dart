@@ -14,6 +14,8 @@ import 'package:http/http.dart' as http;
 import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 import 'package:progress_hud/progress_hud.dart';
 import 'package:image_picker/image_picker.dart';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 
 void main() => runApp(M());
@@ -57,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen> {
             'assets/splash_background.flr',
             alignment: Alignment.center,
             fit: BoxFit.contain,
-            animation: 'Apple',
+            animation: 'fade',
           ),
         ],
       ),
@@ -91,7 +93,10 @@ class _H extends State<H> {
   final BarcodeDetector barcodeDetector =
       FirebaseVision.instance.barcodeDetector();
 
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+
   ProgressHUD _progressHUD;
+  SharedPreferences preferences;
 
   bool _ready = false;
   bool _detected = true;
@@ -135,9 +140,22 @@ class _H extends State<H> {
   }
 
   void _G() async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-//    widget.savedItems = preferences.getStringList('user-data');
+    preferences = await SharedPreferences.getInstance();
 
+    /// TODO Register Token w/ Firestore when used!
+    String token = await _firebaseMessaging.getToken();
+    print('messaging token: ' + token);
+
+    _firebaseMessaging.configure(
+        onMessage: (Map<String, dynamic> message) async {
+      print('on message $message');
+    }, onResume: (Map<String, dynamic> message) async {
+      print('on resume $message');
+    }, onLaunch: (Map<String, dynamic> message) async {
+      print('on launch $message');
+    });
+
+    widget.savedItems = preferences.getStringList('user-data') ?? [];
     setState(() {
       _ready = true;
     });
@@ -160,8 +178,10 @@ class _H extends State<H> {
   @override
   Widget build(context) {
     return Scaffold(
-      appBar: AppBar(),
-      backgroundColor: Color.fromRGBO(255, 204, 102, 1),
+      appBar: AppBar(
+        title: Text('My Items'),
+        centerTitle: true,
+      ),
       body: Stack(
         children: <Widget>[
           Center(
@@ -189,14 +209,46 @@ class _H extends State<H> {
                     trailing: IconButton(
                         icon: Icon(Icons.close),
                         onPressed: () {
-                          widget.savedItems.removeRange(index, index + 4);
-                          setState(() {});
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text(
+                                    'Are you sure?',
+                                  ),
+                                  actions: <Widget>[
+                                    MaterialButton(
+                                      textColor: Colors.white,
+                                      child: Text('Cancel'),
+                                      color: Colors.red,
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                    MaterialButton(
+                                      textColor: Colors.white,
+                                      child: Text('Remove'),
+                                      color: Colors.green,
+                                      onPressed: () {
+                                        preferences.setStringList(
+                                            'user-data', widget.savedItems);
+                                        widget.savedItems.removeRange(
+                                            4 * index, 4 * index + 4);
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                  ],
+                                );
+                              }).then((d) {
+                            setState(() {});
+                          });
                         }),
                   ),
-                  color: Colors.white,
                 );
               },
-              separatorBuilder: (BuildContext context, int index) => Divider(),
+              separatorBuilder: (BuildContext context, int index) => Divider(
+                    color: Colors.transparent,
+                  ),
             ),
           ),
           _progressHUD
@@ -204,8 +256,8 @@ class _H extends State<H> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: getImage,
-        icon: Icon(Icons.camera),
-        label: Text('Scan Barcode'),
+        icon: Icon(Icons.photo_camera),
+        label: Text('Scan A Barcode'),
       ),
     );
   }
@@ -227,8 +279,11 @@ class _C extends State<C> {
   DateTime expirationDate;
   Map<String, dynamic> data;
 
+  SharedPreferences preferences;
+
   bool _ready = false;
 
+  /// TODO Convert this to a Cloud Firestore function
   Future<String> _convertToUPCA(String UPCE) async {
     String manufacturerType = UPCE[6];
     String UPCA = "0";
@@ -262,6 +317,8 @@ class _C extends State<C> {
   }
 
   void _G() async {
+    preferences = await SharedPreferences.getInstance();
+
     data = {
       'items': [
         {
@@ -280,20 +337,21 @@ class _C extends State<C> {
         }
       ]
     };
-//    if (upc.length < 12) {
-//      upc = await _convertToUPCA(upc);
-//      print("Converted UPCA: " + upc);
-//    }
-//
-//    var response = await http.get(
-//        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
-//        headers: {
-//          'Content-Type': 'application/json',
-//          'Accept': 'application/json'
-//        });
-//
-//    data = json.decode(response.body);
-//    print('Items: ' + data['items'].toString());
+    if (upc.length < 12) {
+      upc = await _convertToUPCA(upc);
+      print("Converted UPCA: " + upc);
+    }
+
+    var response = await http.get(
+        'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        });
+
+    data = json.decode(response.body);
+    print('Body: ' + data.toString());
+    print('Items: ' + data['items'].toString());
 
     setState(() {
       _ready = true;
@@ -312,7 +370,6 @@ class _C extends State<C> {
         appBar: AppBar(),
         body: _ready
             ? Container(
-                color: Color.fromRGBO(255, 255, 255, 1.0),
                 padding: EdgeInsets.all(16.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -379,10 +436,12 @@ class _C extends State<C> {
                                 ..add(data['items'][0]['images'][0])
                                 ..add(upc);
 
+                              preferences.setStringList(
+                                  'user-data', widget.savedItems);
+
                               Navigator.of(context).pop();
                             },
                             child: Text('Submit'),
-                            color: Colors.amber,
                           ),
                         )
                       ],
