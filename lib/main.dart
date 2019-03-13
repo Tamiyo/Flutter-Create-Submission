@@ -157,14 +157,9 @@ class _H extends State {
 
       var d = json.decode(r.body);
 
-      showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (x) {
-            return C(
-              d: d,
-            );
-          }).then((d) {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (x) => C(d: d)))
+          .then((d) {
         setState(() {});
       });
     } else {
@@ -178,7 +173,7 @@ class _H extends State {
     p = await SharedPreferences.getInstance();
 
     f.initialize(InitializationSettings(
-        AndroidInitializationSettings('@mipmap/ic_launcher'), null));
+        AndroidInitializationSettings('@mipmap/my_launcher'), null));
 
     s = (p.getString('u') != null
         ? json.decode(p.getString('u'))
@@ -244,7 +239,7 @@ class _H extends State {
   Widget build(x) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('My Items'),
+          title: Text('My Pantry'),
           centerTitle: true,
         ),
         body: Builder(builder: (x) {
@@ -374,81 +369,98 @@ class _C extends State {
   });
 
   var da;
-  var eD;
   var n;
   var image;
 
+  var eD;
+
   @override
   Widget build(x) {
+    print(da);
     var d = da['items'][0];
 
     image = Image.network(d['images'].isEmpty ? tr : d['images'][0]);
 
-    return SimpleDialog(
-      title: Text(d['title']),
-      contentPadding: EdgeInsets.all(24.0),
-      children: [
-        image,
-        DateTimePickerFormField(
-          inputType: InputType.date,
-          onChanged: (d) {
-            eD = d;
-          },
-          format: DateFormat('yyyy-MM-dd'),
-          editable: false,
-          decoration: InputDecoration(
-            labelText: 'Expiration Date',
-            prefixIcon: Icon(Icons.date_range),
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0.0,
+        backgroundColor: Colors.white,
+        iconTheme: IconThemeData(color: Color(0xFF454851)),
+      ),
+      body: Stack(
+        children: <Widget>[
+          FlareActor(
+            'assets/stopwatch.flr',
+            alignment: Alignment.center,
+            fit: BoxFit.contain,
+            animation: 'tick',
           ),
-        ),
-        Divider(color: Colors.transparent),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.of(x).pop();
-              },
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-            SimpleDialogOption(
-              onPressed: () async {
-                var dt = DateTime.now();
-                var fr = eD.difference(dt).inDays;
+          Align(
+            alignment: Alignment(0, 0.8),
+            child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Expanded(
+                      flex: 3,
+                      child: DateTimePickerFormField(
+                        inputType: InputType.date,
+                        format: DateFormat('yyyy-MM-dd'),
+                        editable: false,
+                        decoration: InputDecoration(
+                          labelText: 'Expiration Date',
+                          prefixIcon: Icon(Icons.date_range),
+                        ),
+                        onChanged: (D) {
+                          eD = D;
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: MaterialButton(
+                        child: Text('Submit'),
+                        onPressed: () async {
+                          var dt = DateTime.now();
+                          int fr = eD.difference(dt).inDays;
 
-                s.add({
-                  'fr': fr,
-                  'n': d['title'],
-                  'iU': d['images'].length > 0 ? d['images'][0] : tr,
-                  'sD': dt,
-                  'p': 1.0,
-                  'eD': eD
-                });
+                          s.add({
+                            'fr': fr > 0 ? fr.toString() : 1,
+                            'dl': fr > 0 ? fr.toString() : 1,
+                            'n': d['title'],
+                            'iU': d['images'].length > 0 ? d['images'][0] : tr,
+                            'sD': dt,
+                            'p': 1.0,
+                            'eD': eD
+                          });
 
-                si();
+                          si();
 
-                await f.schedule(
-                    d['title'].hashCode,
-                    'Spoil Alert!',
-                    '${d['title']} is going to spoil! Check up on it!',
-                    dt.add(Duration(days: fr)),
-                    NotificationDetails(
-                        AndroidNotificationDetails('epn', 'Push Notifications',
-                            'Push Notifications about your Eden food items!',
-                            priority: Priority.High,
-                            channelAction: AndroidNotificationChannelAction
-                                .CreateIfNotExists),
-                        null));
-                Navigator.of(x).pop();
-              },
-              child: Text('Submit', style: TextStyle(color: cg)),
-            ),
-          ],
-        )
-      ],
+                          await f.schedule(
+                              d['title'].hashCode,
+                              'Spoil Alert!',
+                              '${d['title']} is going to spoil! Check up on it!',
+                              dt.add(Duration(days: fr)),
+                              NotificationDetails(
+                                  AndroidNotificationDetails(
+                                      'epn',
+                                      'Push Notifications',
+                                      'Push Notifications about your Eden food items!',
+                                      priority: Priority.High,
+                                      channelAction:
+                                          AndroidNotificationChannelAction
+                                              .CreateIfNotExists),
+                                  null));
+                          Navigator.of(x).pop();
+                        },
+                      ),
+                    ),
+                  ],
+                )),
+          ),
+        ],
+      ),
     );
   }
 }
