@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -20,29 +19,31 @@ import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 
 void main() => runApp(M());
 
+var cg = Colors.green;
+
 class M extends StatelessWidget {
   @override
-  Widget build(context) {
+  Widget build(x) {
     return MaterialApp(
-      home: SplashScreen(),
+      home: SS(),
       theme: ThemeData(
-        primaryColor: Colors.green,
-        accentColor: Colors.green,
+        primaryColor: cg,
+        accentColor: cg,
       ),
     );
   }
 }
 
-class SplashScreen extends StatefulWidget {
-  _SplashScreenState createState() => new _SplashScreenState();
+class SS extends StatefulWidget {
+  _SS createState() => _SS();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SS extends State {
   startCountdown() async {
-    var _duration = new Duration(seconds: 3);
-    return new Timer(_duration, () {
+    var _d = Duration(seconds: 3);
+    return Timer(_d, () {
       Navigator.of(context)
-          .pushReplacement(new MaterialPageRoute(builder: (context) {
+          .pushReplacement(MaterialPageRoute(builder: (context) {
         return H();
       }));
     });
@@ -55,10 +56,10 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(x) {
     return Scaffold(
       body: Stack(
-        children: <Widget>[
+        children: [
           FlareActor(
             'assets/splash_background.flr',
             alignment: Alignment.center,
@@ -71,296 +72,229 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+List<dynamic> s = [];
+
+final FlutterLocalNotificationsPlugin f = FlutterLocalNotificationsPlugin();
+
+final BarcodeDetector b = FirebaseVision.instance.barcodeDetector();
+
+SharedPreferences p;
+
+void si() {
+  p.setString('u', json.encode('{ \"items\": ' + s.toString() + "}"));
+}
+
+var tr = 'http://www.pngmart.com/files/5/Snow-PNG-Transparent-Image.png';
+
 class H extends StatefulWidget {
-  /// TODO COLOR PALETTE https://coolors.co/56c450-454851-de1a1a-ffffff-34d1bf
-  /// TODO FLARE ASSETS https://www.2dimensions.com/a/tamiyo/files/flare/new-file-2
-
-  List<dynamic> savedItems = [];
-
-//  List<dynamic> savedItems = [
-//    {
-//      'fromStartToEnd': '3',
-//      'name': 'Granny Smith Apple',
-//      'imageUrl':
-//          'https://images-na.ssl-images-amazon.com/images/I/81N4hYrr%2BxL._SY355_.jpg',
-//      'upc': '2134001239012',
-//      'startDate': '2019-03-10 00:00:00.000',
-//      'endDate': '2019-03-14 00:00:00.000',
-//      'percent': 0.0,
-//    },
-//    {
-//      'fromStartToEnd': '7',
-//      'name': 'Broccoli',
-//      'imageUrl':
-//          'https://www.producemarketguide.com/sites/default/files/Commodities.tar/Commodities/broccoli_commodity-page.png',
-//      'upc': '2134001239012',
-//      'startDate': '2019-03-10 00:00:00.000',
-//      'endDate': '2019-03-18 00:00:00.000',
-//      'percent': 0.0,
-//    },
-//    {
-//      'fromStartToEnd': '2',
-//      'name': 'Pineapple',
-//      'imageUrl':
-//          'https://images-na.ssl-images-amazon.com/images/I/71%2BqAJehpkL._SY355_.jpg',
-//      'upc': '2134001239012',
-//      'startDate': '2019-03-10 00:00:00.000',
-//      'endDate': '2019-03-13 00:00:00.000',
-//      'percent': 0.0,
-//    },
-//  ];
-
   @override
   _H createState() => _H();
 }
 
-class _H extends State<H> {
-  final BarcodeDetector barcodeDetector =
-      FirebaseVision.instance.barcodeDetector();
-
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      new FlutterLocalNotificationsPlugin();
-
+class _H extends State {
   ProgressHUD _progressHUD;
-  SharedPreferences preferences;
 
-  bool _ready = false;
-  var upc;
+  bool _r = false;
+  var ctx;
+  var u;
+
+  Future<String> _convertTouA(String uE) async {
+    String manufacturerType = uE[6];
+    String uA = "0";
+
+    switch (manufacturerType) {
+      case "0":
+      case "1":
+      case "2":
+        uA += uE[1] + uE[2] + uE[6] + '0000' + uE.substring(3, 6) + uE[7];
+        break;
+      case "3":
+        uA += uE.substring(1, 4) + '00000' + uE.substring(4, 6) + uE[7];
+        break;
+      case "4":
+        uA += uE.substring(1, 5) + '00000' + uE[5] + uE[7];
+        break;
+      case "5":
+      case "6":
+      case "7":
+      case "8":
+      case "9":
+        uA += uE.substring(1, 6) + '0000' + uE[6] + uE[7];
+    }
+
+    return uA;
+  }
 
   Future getImage() async {
-    final File image = await ImagePicker.pickImage(source: ImageSource.camera);
-    bool _detected = true;
+    var image = await ImagePicker.pickImage(source: ImageSource.camera);
 
     setState(() {
       _progressHUD.state.show();
     });
 
-    List<Barcode> barcodes;
-    image != null
-        ? barcodes = await barcodeDetector
-            .detectInImage(FirebaseVisionImage.fromFile(image))
-        : barcodes = [];
+    var ba = image != null
+        ? await b.detectInImage(FirebaseVisionImage.fromFile(image))
+        : [];
 
-    if (barcodes.length < 1) {
-      _detected = false;
-      print('Barcode Detection Failed');
-    } else {
-      upc = barcodes[0].rawValue;
-    }
+    u = ba.isEmpty ? null : ba[0].rawValue;
 
     setState(() {
       _progressHUD.state.dismiss();
     });
 
-    if (_detected) {
-      /// TODO Convert this to a Cloud Firestore function
-      Future<String> _convertToUPCA(String UPCE) async {
-        String manufacturerType = UPCE[6];
-        String UPCA = "0";
-
-        switch (manufacturerType) {
-          case "0":
-          case "1":
-          case "2":
-            UPCA += UPCE[1] +
-                UPCE[2] +
-                UPCE[6] +
-                '0000' +
-                UPCE.substring(3, 6) +
-                UPCE[7];
-            break;
-          case "3":
-            UPCA +=
-                UPCE.substring(1, 4) + '00000' + UPCE.substring(4, 6) + UPCE[7];
-            break;
-          case "4":
-            UPCA += UPCE.substring(1, 5) + '00000' + UPCE[5] + UPCE[7];
-            break;
-          case "5":
-          case "6":
-          case "7":
-          case "8":
-          case "9":
-            UPCA += UPCE.substring(1, 6) + '0000' + UPCE[6] + UPCE[7];
-        }
-
-        return UPCA;
+    if (u != null) {
+      if (u.length < 12) {
+        u = await _convertTouA(u);
+        print("Converted uA: " + u);
       }
 
-      if (upc.length < 12) {
-        upc = await _convertToUPCA(upc);
-        print("Converted UPCA: " + upc);
-      }
-
-      var response = await http.get(
-          'https://api.upcitemdb.com/prod/trial/lookup?upc=' + upc,
+      var r = await http.get(
+          'https://api.upcitemdb.com/prod/trial/lookup?upc=' + u,
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           });
 
-      var data = json.decode(response.body);
-      print('Body: ' + data.toString());
-      print('Items: ' + data['items'].toString());
+      var d = json.decode(r.body);
 
       showDialog(
-          context: this.context,
+          context: context,
           barrierDismissible: false,
-          builder: (BuildContext context) {
+          builder: (x) {
             return C(
-              data: data,
-              preferences: preferences,
-              savedItems: widget.savedItems,
-              flutterLocalNotificationsPlugin: flutterLocalNotificationsPlugin,
+              d: d,
             );
           }).then((d) {
         setState(() {});
       });
+    } else {
+      Scaffold.of(ctx).showSnackBar(SnackBar(
+        content: Text('Failed barcode scan, try again!'),
+      ));
     }
   }
 
   void _G() async {
-    preferences = await SharedPreferences.getInstance();
+    p = await SharedPreferences.getInstance();
 
-    var initializationSettingsAndroid =
-        new AndroidInitializationSettings('@mipmap/ic_launcher');
-    var initializationSettings =
-        new InitializationSettings(initializationSettingsAndroid, null);
-    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    f.initialize(InitializationSettings(
+        AndroidInitializationSettings('@mipmap/ic_launcher'), null));
 
-    widget.savedItems = (preferences.getString('user-data') != null
-        ? json.decode(preferences.getString('user-data'))
+    s = (p.getString('u') != null
+        ? json.decode(p.getString('u'))
         : [
             {
-              'fromStartToEnd': '3',
-              'name': 'Granny Smith Apple',
-              'imageUrl':
+              'fr': '3',
+              'n': 'Granny Smith Apple',
+              'iU':
                   'https://images-na.ssl-images-amazon.com/images/I/81N4hYrr%2BxL._SY355_.jpg',
-              'upc': '2134001239012',
-              'startDate': '2019-03-10 00:00:00.000',
-              'endDate': '2019-03-14 00:00:00.000',
-              'percent': 0.0,
+              'sD': '2019-03-10 00:00:00.000',
+              'eD': '2019-03-14 00:00:00.000',
+              'p': 0.0,
             },
             {
-              'fromStartToEnd': '7',
-              'name': 'Broccoli',
-              'imageUrl':
+              'fr': '7',
+              'n': 'Broccoli',
+              'iU':
                   'https://www.producemarketguide.com/sites/default/files/Commodities.tar/Commodities/broccoli_commodity-page.png',
-              'upc': '2134001239012',
-              'startDate': '2019-03-10 00:00:00.000',
-              'endDate': '2019-03-18 00:00:00.000',
-              'percent': 0.0,
+              'sD': '2019-03-10 00:00:00.000',
+              'eD': '2019-03-18 00:00:00.000',
+              'p': 0.0,
             },
             {
-              'fromStartToEnd': '2',
-              'name': 'Pineapple',
-              'imageUrl':
+              'fr': '2',
+              'n': 'Pineapple',
+              'iU':
                   'https://images-na.ssl-images-amazon.com/images/I/71%2BqAJehpkL._SY355_.jpg',
-              'upc': '2134001239012',
-              'startDate': '2019-03-10 00:00:00.000',
-              'endDate': '2019-03-13 00:00:00.000',
-              'percent': 0.0,
+              'sD': '2019-03-10 00:00:00.000',
+              'eD': '2019-03-13 00:00:00.000',
+              'p': 0.0,
             },
           ]);
 
-    for (int i = 0; i < widget.savedItems.length; i++) {
-      widget.savedItems[i]['daysLeft'] =
-          (DateTime.parse(widget.savedItems[i]['endDate'])
-                  .difference(DateTime.now()))
-              .inDays;
-      widget.savedItems[i]['percent'] = widget.savedItems[i]['daysLeft'] /
-          DateTime.parse(widget.savedItems[i]['endDate'])
-              .difference(DateTime.parse(widget.savedItems[i]['startDate']))
-              .inDays;
+    for (var le in s) {
+      var e = DateTime.parse(le['eD']);
+      le['dl'] = e.difference(DateTime.now()).inDays;
+      le['p'] = le['dl'] / e.difference(DateTime.parse(le['sD'])).inDays;
     }
 
-    widget.savedItems.sort((a, b) => a['percent'].compareTo(b['percent']));
+    s.sort((a, b) => a['p'].compareTo(b['p']));
 
-    print('Done with stuff, calling setState()');
     setState(() {
-      _ready = true;
+      _r = true;
     });
   }
 
   @override
   void initState() {
-    _progressHUD = new ProgressHUD(
+    _progressHUD = ProgressHUD(
       backgroundColor: Colors.black12,
       loading: false,
       color: Colors.white,
-      containerColor: Colors.blue,
+      containerColor: cg,
       borderRadius: 5.0,
-      text: 'Loading...',
+      text: 'Processing...',
     );
+
     _G();
     super.initState();
   }
 
   @override
-  Widget build(context) {
+  Widget build(x) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('My Items'),
-        centerTitle: true,
-      ),
-      body: _ready
-          ? Stack(
-              children: <Widget>[
-                Center(
-                  child: ListView.separated(
-                    itemCount: widget.savedItems.length,
-                    padding: EdgeInsets.fromLTRB(8.0, 16.0, 8.0, 16.0),
-                    itemBuilder: (BuildContext context, int index) {
-                      return Container(
-                        child: ListTile(
+        appBar: AppBar(
+          title: Text('My Items'),
+          centerTitle: true,
+        ),
+        body: Builder(builder: (x) {
+          ctx = x;
+          return _r
+              ? Stack(
+                  children: [
+                    ListView.separated(
+                      itemCount: s.length,
+                      padding: EdgeInsets.fromLTRB(8.0, 16.0, 8.0, 16.0),
+                      itemBuilder: (x, i) {
+                        var e = s[i];
+                        return ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Colors.white,
-                            backgroundImage: _ready
-                                ? Image.network(
-                                    widget.savedItems[index]['imageUrl'],
-                                  ).image
-                                : null,
-                            child: _ready ? null : CircularProgressIndicator(),
+                            backgroundImage:
+                                _r ? Image.network(e['iU']).image : tr,
+                            child: _r ? null : CircularProgressIndicator(),
                           ),
-                          title: Text(
-                            widget.savedItems[index]['name'],
-                            maxLines: 2,
-                          ),
+                          title: Text(e['n'], maxLines: 2),
                           subtitle: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
+                            children: [
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
+                                children: [
                                   Text('0'),
                                   LinearPercentIndicator(
-                                    width:
-                                        MediaQuery.of(context).size.width / 2,
-                                    percent: widget.savedItems[index]
-                                        ['percent'],
-                                    progressColor: (widget.savedItems[index]
-                                                ['percent'] >
-                                            .5)
-                                        ? Colors.green
-                                        : Colors.amber,
-                                    backgroundColor: Colors.redAccent,
+                                    width: MediaQuery.of(x).size.width / 2,
+                                    percent: e['p'],
+                                    progressColor: e['p'] > .5
+                                        ? cg
+                                        : e['p'] > .2
+                                            ? Colors.amber
+                                            : Colors.red,
+                                    backgroundColor: e['p'] > 0
+                                        ? Color(0xFFD3D3D3)
+                                        : Colors.red,
                                   ),
-                                  Text(
-                                    widget.savedItems[index]['fromStartToEnd'],
-                                  )
+                                  Text(e['fr'])
                                 ],
                               ),
-                              Text(
-                                  'Expires in ${widget.savedItems[index]['daysLeft']} day(s)')
+                              Text('Expires in ${e['dl']} day(s)')
                             ],
                           ),
                           trailing: IconButton(
                               icon: Icon(Icons.cancel),
                               onPressed: () {
                                 showDialog(
-                                    context: context,
-                                    builder: (context) {
+                                    context: x,
+                                    builder: (x) {
                                       return AlertDialog(
                                         title: Text(
                                           'Remove Item?',
@@ -375,39 +309,28 @@ class _H extends State<H> {
                                                   text:
                                                       'Are you sure you want to remove '),
                                               TextSpan(
-                                                  text:
-                                                      '${widget.savedItems[index]['name']}',
+                                                  text: '${e['n']}',
                                                   style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold)),
                                               TextSpan(
                                                   text: ' from your items?')
                                             ])),
-                                        actions: <Widget>[
+                                        actions: [
                                           MaterialButton(
                                             textColor: Colors.red,
                                             child: Text('Cancel'),
                                             onPressed: () {
-                                              Navigator.pop(context);
+                                              Navigator.pop(x);
                                             },
                                           ),
                                           MaterialButton(
-                                            textColor: Colors.green,
+                                            textColor: cg,
                                             child: Text('Remove'),
                                             onPressed: () async {
-                                              preferences.setString(
-                                                  'user-data',
-                                                  json.encode('{ \"items\": ' +
-                                                      widget.savedItems
-                                                          .toString() +
-                                                      "}"));
-                                              await flutterLocalNotificationsPlugin
-                                                  .cancel(widget
-                                                      .savedItems[index]['name']
-                                                      .hashCode);
-                                              widget.savedItems.removeAt(index);
-
-                                              Navigator.pop(context);
+                                              await f.cancel(e['n'].hashCode);
+                                              s.removeAt(i);
+                                              Navigator.pop(x);
                                             },
                                           ),
                                         ],
@@ -416,112 +339,75 @@ class _H extends State<H> {
                                   setState(() {});
                                 });
                               }),
-                        ),
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) =>
-                        Divider(
-                          color: Colors.transparent,
-                          height: 24.0,
-                        ),
-                  ),
-                ),
-                _progressHUD,
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: <Widget>[
-                      MaterialButton(
-                        onPressed: () {},
-                        child: Row(
-                          children: <Widget>[
-                            Icon(Icons.add),
-                            Padding(
-                              child: Text('Add an Item'),
-                              padding: EdgeInsets.only(left: 8.0),
-                            )
-                          ],
-                        ),
-                      ),
-                      MaterialButton(
-                        onPressed: getImage,
-                        child: Row(
-                          children: <Widget>[
-                            Icon(Icons.add_a_photo),
-                            Padding(
-                              child: Text('Scan a Barcode'),
-                              padding: EdgeInsets.only(left: 8.0),
-                            )
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
+                        );
+                      },
+                      separatorBuilder: (x, i) => Divider(
+                            color: Colors.transparent,
+                            height: 24.0,
+                          ),
+                    ),
+                    _progressHUD,
+                  ],
                 )
-              ],
-            )
-          : Center(
-              child: CircularProgressIndicator(),
-            ),
-    );
+              : Center(
+                  child: CircularProgressIndicator(),
+                );
+        }),
+        floatingActionButton: FloatingActionButton(
+          onPressed: getImage,
+          child: Icon(Icons.add_a_photo),
+        ));
   }
 }
 
-class C extends StatelessWidget {
-  C(
-      {this.data,
-      this.preferences,
-      this.savedItems,
-      this.flutterLocalNotificationsPlugin});
+class C extends StatefulWidget {
+  C({this.d});
 
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-  Map<String, dynamic> data;
-  SharedPreferences preferences;
-  List<dynamic> savedItems;
-  DateTime expirationDate;
+  var d;
+
+  _C createState() => _C(da: d);
+}
+
+class _C extends State {
+  _C({
+    this.da,
+  });
+
+  var da;
+  var eD;
+  var n;
+  var image;
 
   @override
-  Widget build(BuildContext context) {
-    var d = data['items'][0];
+  Widget build(x) {
+    var d = da['items'][0];
+
+    image = Image.network(d['images'].isEmpty ? tr : d['images'][0]);
 
     return SimpleDialog(
-      titlePadding: EdgeInsets.all(16.0),
-      title: Text(
-        d['title'].toString(),
-        maxLines: 2,
-      ),
-      contentPadding: EdgeInsets.all(16.0),
-      children: <Widget>[
-        Image.network(
-            d['images'].length > 0
-                ? d['images'][0].toString()
-
-                /// TODO Change to null image hosted @ Cloud Firestore
-                : 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Table_grapes_on_white.jpg',
-            fit: BoxFit.cover),
+      title: Text(d['title']),
+      contentPadding: EdgeInsets.all(24.0),
+      children: [
+        image,
         DateTimePickerFormField(
           inputType: InputType.date,
           onChanged: (d) {
-            expirationDate = d;
+            eD = d;
           },
           format: DateFormat('yyyy-MM-dd'),
           editable: false,
           decoration: InputDecoration(
             labelText: 'Expiration Date',
             prefixIcon: Icon(Icons.date_range),
-            hasFloatingPlaceholder: false,
           ),
         ),
-        Divider(
-          color: Colors.transparent,
-        ),
+        Divider(color: Colors.transparent),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
+          children: [
             SimpleDialogOption(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(x).pop();
               },
               child: Text(
                 'Cancel',
@@ -530,47 +416,35 @@ class C extends StatelessWidget {
             ),
             SimpleDialogOption(
               onPressed: () async {
-                var fromStartToEnd =
-                    expirationDate.difference(DateTime.now()).inDays;
+                var dt = DateTime.now();
+                var fr = eD.difference(dt).inDays;
 
-                savedItems.add({
-                  'fromStartToEnd': fromStartToEnd.toString(),
-                  'daysLeft': fromStartToEnd.toString(),
-                  'name': d['title'],
-                  'imageUrl': d['images'].length > 0
-                      ? d['images'][0]
-                      : 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/NA_cap_icon.svg/423px-NA_cap_icon.svg.png',
-                  'upc': d['upc'],
-                  'startDate': DateTime.now().toIso8601String(),
-                  'percent': 1.0,
-                  'endDate': expirationDate.toIso8601String()
+                s.add({
+                  'fr': fr,
+                  'n': d['title'],
+                  'iU': d['images'].length > 0 ? d['images'][0] : tr,
+                  'sD': dt,
+                  'p': 1.0,
+                  'eD': eD
                 });
 
-                preferences.setString('user-data',
-                    json.encode('{ \"items\": ' + savedItems.toString() + "}"));
+                si();
 
-                var scheduledNotificationDateTime =
-                    new DateTime.now().add(new Duration(days: fromStartToEnd));
-                var androidPlatformChannelSpecifics =
-                    new AndroidNotificationDetails(
-                        'Eden-Push-Notifications',
-                        'Push Notifications',
-                        'Push Notifications about your Eden food items!',
-                        priority: Priority.High,
-                        channelAction:
-                            AndroidNotificationChannelAction.CreateIfNotExists);
-                NotificationDetails platformChannelSpecifics =
-                    new NotificationDetails(
-                        androidPlatformChannelSpecifics, null);
-                await flutterLocalNotificationsPlugin.schedule(
+                await f.schedule(
                     d['title'].hashCode,
                     'Spoil Alert!',
                     '${d['title']} is going to spoil! Check up on it!',
-                    scheduledNotificationDateTime,
-                    platformChannelSpecifics);
-                Navigator.of(context).pop();
+                    dt.add(Duration(days: fr)),
+                    NotificationDetails(
+                        AndroidNotificationDetails('epn', 'Push Notifications',
+                            'Push Notifications about your Eden food items!',
+                            priority: Priority.High,
+                            channelAction: AndroidNotificationChannelAction
+                                .CreateIfNotExists),
+                        null));
+                Navigator.of(x).pop();
               },
-              child: Text('Submit', style: TextStyle(color: Colors.green)),
+              child: Text('Submit', style: TextStyle(color: cg)),
             ),
           ],
         )
