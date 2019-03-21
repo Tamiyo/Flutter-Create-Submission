@@ -1,282 +1,276 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:flare_flutter/flare_actor.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-
+import 'package:clippy_flutter/clippy_flutter.dart';
+import 'package:progress_hud/progress_hud.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
-import 'package:progress_hud/progress_hud.dart';
-import 'package:image_picker/image_picker.dart';
+final xbox =  IconData(0xe800, fontFamily: 'Xbox');
+final ps =  IconData(0xe801, fontFamily: 'Playstation');
 
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:firebase_ml_vision/firebase_ml_vision.dart';
-
-var cg = Colors.green;
+final platforms = {
+  5: 'PC',
+  2: 'PS4',
+  1: 'XBOX'
+};
 
 void main() => runApp(MaterialApp(
-      home: S(),
-      theme: ThemeData(
-        primaryColor: cg,
-        accentColor: cg,
+      home: Scaffold(
+        body: H(),
       ),
     ));
 
-class S extends HookWidget {
-  @override
-  Widget build(x) {
+class H extends StatefulWidget {
+  _H createState() => new _H();
+}
 
-    startCountdown() async {
-      return Timer(Duration(seconds: 3), () {
-        Navigator.of(x).pushReplacement(MaterialPageRoute(builder: (x) {
-          return H();
-        }));
-      });
+class _H extends State<H> {
+  final TextEditingController _controller = new TextEditingController();
+
+  int platform = 5;
+
+  ProgressHUD _progressHUD;
+
+  Future<void> _getPlayerStats(
+      String playerName, int platform, BuildContext context) async {
+
+    FocusScope.of(context).requestFocus(new FocusNode());
+    print('Gathering datat for $playerName');
+
+    final response = await http.get(
+        'https://public-api.tracker.gg/apex/v1/standard/profile/$platform/$playerName',
+        headers: {'TRN-Api-Key': '3ac4362a-8357-4855-89aa-c3c7444382ca'}).timeout(const Duration(seconds: 10));
+
+    final body = json.decode(response.body);
+    print(body);
+
+    if(body.keys.contains('errors') || body['data']['children'].length == 0) {
+      Scaffold.of(context).showSnackBar(SnackBar(content: Text('Couldn\'t Find Stats for $playerName on ${platforms[platform]}' ),));
+    } else {
+      Navigator.of(context).push(new MaterialPageRoute(builder: (context) {
+        return PlayerDetails(
+          json: body,
+        );
+      }));
     }
 
-    startCountdown();
-    return Scaffold(
-      body: Stack(
-        children: [
-          FlareActor(
-            'assets/s.flr',
-            fit: BoxFit.contain,
-            animation: 'fade',
+  }
+
+  @override
+  void initState() {
+    _progressHUD = new ProgressHUD(
+      color: Colors.white,
+      loading: false,
+      containerColor: Color(0xFFbd3d3d),
+      borderRadius: 5.0,
+      text: 'Loading...',
+    );
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        Container(
+          decoration: BoxDecoration(
+              image: DecorationImage(
+                  image: Image.asset('assets/background.png').image,
+                  fit: BoxFit.cover)),
+          padding: EdgeInsets.all(12.0),
+          width: MediaQuery.of(context).size.width,
+          child: Center(
+            child: Parallelogram(
+                cutLength: 15.0,
+                child: Container(
+                  color: Colors.white,
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                        prefixIcon: Padding(
+                          padding: EdgeInsets.only(left: 24.0, right: 8.0),
+                          child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                  value: platform,
+                                  items: [
+                                    DropdownMenuItem<int>(
+                                      child: Icon(Icons.desktop_windows),
+                                      value: 5,
+                                    ),
+                                    DropdownMenuItem(
+                                      child: Icon(xbox),
+                                      value: 1,
+                                    ),
+                                    DropdownMenuItem(
+                                      child: Icon(ps),
+                                      value: 2,
+                                    )
+                                  ],
+                                  onChanged: (p) {
+                                    setState(() {
+                                      platform = p;
+                                    });
+                                  })),
+                        ),
+                        suffixIcon: Parallelogram(
+                            cutLength: 15.0,
+                            child: MaterialButton(
+                              onPressed: () async {
+
+                                setState(() {
+                                  _progressHUD.state.show();
+                                });
+
+                                await _getPlayerStats(_controller.text, platform, context);
+                                setState(() {
+                                  _progressHUD.state.dismiss();
+                                });
+                              },
+                              color: Colors.amber,
+                              child: Text(
+                                'Search',
+                                style: TextStyle(fontSize: 14.0),
+                              ),
+                            )),
+                        contentPadding: EdgeInsets.only(left: 24.0, top: 16.0),
+                        hintText: 'Player Name',
+                        hintStyle: TextStyle(fontSize: 14.0)),
+                  ),
+                )),
           ),
-        ],
-      ),
+        ),
+        _progressHUD
+      ],
     );
   }
 }
 
-var s = [];
-var f = FlutterLocalNotificationsPlugin();
-var b = FirebaseVision.instance.barcodeDetector();
-var p;
+class PlayerDetails extends StatefulWidget {
+  PlayerDetails({this.json});
 
-void si() {
-  p.setString('u', json.encode('{ \"items\": ' + s.toString() + "}"));
+  final json;
+
+  _PlayerDetailsState createState() => new _PlayerDetailsState(json: json);
 }
 
-var tr = 'http://www.pngmart.com/files/5/Snow-PNG-Transparent-Image.png';
+class _PlayerDetailsState extends State<PlayerDetails> {
+  _PlayerDetailsState({this.json});
 
-class H extends HookWidget {
-  var _p;
-  var ctx;
-  var _r;
-  var u;
-
-  Future<String> _cA(var uE) async {
-    var uA = "0";
-
-    switch (uE[6]) {
-      case "0":
-      case "1":
-      case "2":
-        uA += uE[1] + uE[2] + uE[6] + '0000' + uE.substring(3, 6) + uE[7];
-        break;
-      case "3":
-        uA += uE.substring(1, 4) + '00000' + uE.substring(4, 6) + uE[7];
-        break;
-      case "4":
-        uA += uE.substring(1, 5) + '00000' + uE[5] + uE[7];
-        break;
-      case "5":
-      case "6":
-      case "7":
-      case "8":
-      case "9":
-        uA += uE.substring(1, 6) + '0000' + uE[6] + uE[7];
-    }
-
-    return uA;
-  }
-
-  Future getImage() async {
-    _p.state.show();
-
-    var ba = await b.detectInImage(FirebaseVisionImage.fromFile(
-            await ImagePicker.pickImage(source: ImageSource.camera))) ??
-        [];
-
-    u ??= ba[0].rawValue;
-
-    _p.state.dismiss();
-
-    if (u != null) {
-      u = (u.length < 12) ? await _cA(u) : u;
-
-      var r = await http.get(
-          'https://api.upcitemdb.com/prod/trial/lookup?upc=' + u,
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          });
-
-      var d = json.decode(r.body);
-
-      Navigator.of(ctx).push(MaterialPageRoute(builder: (x) => C(d: d)));
-    } else {
-      Scaffold.of(ctx).showSnackBar(SnackBar(
-        content: Text('Failed barcode scan, try again!'),
-      ));
-    }
-  }
-
-  void _G() async {
-    p = await SharedPreferences.getInstance();
-
-    f.initialize(InitializationSettings(
-        AndroidInitializationSettings('@mipmap/my_launcher'), null));
-
-    for (var le in s) {
-      var e = DateTime.parse(le['eD']);
-      le['dl'] = e.difference(DateTime.now()).inDays;
-      le['p'] = le['dl'] / e.difference(DateTime.parse(le['sD'])).inDays;
-    }
-
-    s.sort((a, b) => a['p'].compareTo(b['p']));
-
-    _r.value = true;
-  }
+  final Map<String, dynamic> json;
 
   @override
-  Widget build(x) {
-    ctx = useContext();
-    _r = useState(false);
-    _p = useState(ProgressHUD(
-      loading: false,
-    ));
-    u = useState('');
+  Widget build(BuildContext context) {
+    Map<String, dynamic> champion = {};
 
-    _G();
-
-    return Scaffold(
-        appBar: AppBar(
-          title: Text('My Pantry'),
-          centerTitle: true,
-        ),
-        body: Builder(builder: (x) {
-          ctx = x;
-          return _r.value
-              ? Stack(
-                  children: [
-                    ListView.separated(
-                      itemCount: s.length,
-                      padding: EdgeInsets.fromLTRB(8.0, 16.0, 8.0, 16.0),
-                      itemBuilder: (x, i) {
-                        var e = s[i];
-                        return ListTile(
-                          title: Text(e['n'], maxLines: 2),
-                          trailing: IconButton(
-                              icon: Icon(Icons.remove_circle_outline),
-                              onPressed: () async {
-                                await f.cancel(e['n'].hashCode);
-                                s.removeAt(i);
-                                Navigator.pop(x);
-                              }),
-                        );
-                      },
-                      separatorBuilder: (x, i) => Divider(
-                            color: Colors.transparent,
-                          ),
-                    ),
-                    _p.value,
-                  ],
-                )
-              : Center(
-                  child: CircularProgressIndicator(),
-                );
-        }),
-        floatingActionButton: FloatingActionButton(
-          onPressed: getImage,
-          child: Icon(Icons.add_a_photo),
-        ));
-  }
-}
-
-class C extends HookWidget {
-  C({this.d});
-
-  var d;
-  var n;
-  var image;
-  var eD;
-
-  @override
-  Widget build(x) {
-    image = Image.network(d['images'].isEmpty ? tr : d['images'][0]);
+    for (Map<String, dynamic> hero in json['data']['children']) {
+      print(hero.toString());
+      if (hero['metadata']['legend_name'] != 'Unknown') {
+        champion = hero;
+        print('Champion: ${champion.toString()}');
+        break;
+      }
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0.0,
-        backgroundColor: Colors.white,
-        iconTheme: IconThemeData(color: Color(0xFF454851)),
-      ),
       body: Stack(
         children: <Widget>[
-          FlareActor(
-            'assets/w.flr',
-            alignment: Alignment.center,
-            fit: BoxFit.cover,
-            animation: 'tick',
+          AspectRatio(
+            aspectRatio: MediaQuery.of(context).size.width /
+                MediaQuery.of(context).size.height,
+            child: Image.asset(
+              'assets/background.png',
+              fit: BoxFit.cover,
+            ),
           ),
-          Center(
-            child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
+          SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                Stack(
                   children: <Widget>[
-                    DateTimePickerFormField(
-                      inputType: InputType.date,
-                      format: DateFormat('yyyy-MM-dd'),
-                      editable: false,
-                      decoration: InputDecoration(
-                        labelText: 'Expiration Date',
-                        prefixIcon: Icon(Icons.date_range),
-                      ),
-                      onChanged: (D) {
-                        eD = D;
-                      },
+                    Image.network(
+                      champion['metadata']['bgimage'],
+                      fit: BoxFit.cover,
                     ),
-                    MaterialButton(
-                      child: Text('Submit'),
-                      onPressed: () async {
-                        var dt = DateTime.now();
-                        var ti = d['title'];
-                        int fr = eD.difference(dt).inDays;
-
-                        s.add({
-                          'fr': fr > 0 ? fr.toString() : 1,
-                          'n': ti,
-                          'iU': d['images'].length > 0 ? d['images'][0] : tr,
-                          'sD': dt,
-                          'eD': eD
-                        });
-                        si();
-                        await f.schedule(
-                            ti.hashCode,
-                            'Spoil Alert!',
-                            '$ti is going to spoil soon!',
-                            dt.add(Duration(days: fr)),
-                            NotificationDetails(
-                                AndroidNotificationDetails(
-                                    'epn', 'Push Notifications', '',
-                                    priority: Priority.High,
-                                    channelAction:
-                                        AndroidNotificationChannelAction
-                                            .CreateIfNotExists),
-                                null));
-                        Navigator.of(x).pop();
-                      },
+                    Align(
+                      alignment: Alignment.center,
+                      child: Transform(
+                        transform: Matrix4.translationValues(0.0, 30.0, 0.0),
+                        child: Column(
+                          children: <Widget>[
+                            Image.network(
+                              champion['metadata']['icon'],
+                              scale: 3.0,
+                              fit: BoxFit.cover,
+                            ),
+                            Column(
+                              children: <Widget>[
+                                Text(
+                                  json['data']['metadata']
+                                      ['platformUserHandle'],
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontSize: 48.0),
+                                ),
+                                Text(
+                                  '${champion['metadata']['legend_name']} Main',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontSize: 16.0),
+                                )
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
                     ),
                   ],
-                )),
+                ),
+                Divider(
+                  color: Colors.transparent,
+                  height: 48.0,
+                ),
+                Column(
+                    children: json['data']['stats']
+                        .map<Widget>(
+                          (d) => Container(
+                                padding: EdgeInsets.all(16.0),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    Text(
+                                      '${d['metadata']['name']}:',
+                                      style: TextStyle(
+                                          fontSize: 18.0,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      d['displayValue'],
+                                      style: TextStyle(
+                                        fontSize: 18.0,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                        )
+                        .toList()),
+              ],
+            ),
           ),
+          Container(
+            padding: EdgeInsets.only(left: 8.0, top: 32.0),
+            child: CircleAvatar(
+              backgroundColor: Color(0xFFbd3d3d),
+              child: IconButton(
+                icon: Icon(Icons.arrow_back),
+                color: Colors.white,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
+          )
         ],
       ),
     );
