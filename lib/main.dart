@@ -16,7 +16,29 @@ final platforms = {5: 'PC', 2: 'PS4', 1: 'XBOX'};
 TabController _tabController;
 
 void main() => runApp(MaterialApp(
-      theme: ThemeData(primaryColor: Colors.white),
+      theme: ThemeData(
+          primaryColor: Color(0xFFE5E1D8),
+          textTheme: TextTheme(
+              title: TextStyle(
+                  fontFamily: 'Teko',
+                  fontSize: 28,
+                  shadows: [
+                    Shadow(
+                        offset: Offset(1, 1),
+                        blurRadius: 0.0,
+                        color: Colors.white30)
+                  ],
+                  color: Colors.white),
+              subtitle: TextStyle(
+                  fontFamily: 'OpenSans',
+                  fontSize: 16,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                        offset: Offset(1, 1),
+                        blurRadius: 0.0,
+                        color: Colors.white30)
+                  ]))),
       home: Scaffold(
         body: H(),
       ),
@@ -64,15 +86,14 @@ class _H extends State<H> with SingleTickerProviderStateMixin {
   }
 
   Future<void> _gatherGamespotArticles() async {
-    final response = await http
-        .get(
-            'https://www.gamespot.com/api/articles/?api_key=247c3e174dbfcc32ba1251b9b45fdf4af37cd7c8&filter=title%3Aapex%20legends&format=json')
-        .timeout(const Duration(seconds: 5));
+    final response = await http.get(
+        'https://www.gamespot.com/api/articles/?api_key=247c3e174dbfcc32ba1251b9b45fdf4af37cd7c8&filter=title%3Aapex%20legends&format=json');
+//        .timeout(const Duration(seconds: 5));
 
     final body = json.decode(response.body);
     gamespotArticles = body['results'];
 
-    Future.delayed(Duration(seconds: 2)).then((_){
+    Future.delayed(Duration(seconds: 2)).then((_) {
       setState(() {
         _ready = true;
       });
@@ -99,115 +120,116 @@ class _H extends State<H> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return _ready
         ? Stack(
-      children: <Widget>[
-        Container(
-          decoration: BoxDecoration(
-              image: DecorationImage(
-                  image: Image.asset('assets/background.png').image,
-                  fit: BoxFit.cover)),
-          width: MediaQuery.of(context).size.width,
-          child: TabBarView(
-            children: [
+            children: <Widget>[
               Container(
-                  margin: EdgeInsets.only(top: 16.0),
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Center(
-                    child: Parallelogram(
-                        cutLength: 15.0,
-                        child: Container(
-                          color: Colors.white,
-                          child: TextField(
-                            controller: _controller,
-                            decoration: InputDecoration(
-                                prefixIcon: Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 24.0, right: 8.0),
-                                  child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<int>(
-                                          value: platform,
-                                          items: [
-                                            DropdownMenuItem<int>(
-                                              child: Icon(Icons
-                                                  .desktop_windows),
-                                              value: 5,
-                                            ),
-                                            DropdownMenuItem(
-                                              child: Icon(xbox),
-                                              value: 1,
-                                            ),
-                                            DropdownMenuItem(
-                                              child: Icon(ps),
-                                              value: 2,
-                                            )
-                                          ],
-                                          onChanged: (p) {
-                                            print('Changed to $p');
-                                            setState(() {
-                                              platform = p;
-                                            });
-                                          })),
-                                ),
-                                suffixIcon: Parallelogram(
-                                    cutLength: 15.0,
-                                    child: MaterialButton(
-                                      onPressed: () async {
-                                        setState(() {
-                                          _progressHUD.state.show();
-                                        });
-
-                                        await _getPlayerStats(
-                                            _controller.text,
-                                            platform,
-                                            context);
-                                        setState(() {
-                                          _progressHUD.state.dismiss();
-                                        });
-                                      },
-                                      color: Colors.amber,
-                                      child: Text(
-                                        'Search',
-                                        style:
-                                        TextStyle(fontSize: 14.0),
+                decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: Image.asset('assets/background.png').image,
+                        fit: BoxFit.cover)),
+                width: MediaQuery.of(context).size.width,
+                child: TabBarView(
+                  children: [
+                    Container(
+                        margin: EdgeInsets.only(top: 16.0),
+                        padding: EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Center(
+                          child: Parallelogram(
+                              cutLength: 15.0,
+                              child: Container(
+                                color: Colors.white,
+                                child: TextField(
+                                  controller: _controller,
+                                  decoration: InputDecoration(
+                                      prefixIcon: Padding(
+                                        padding: EdgeInsets.only(
+                                            left: 24.0, right: 8.0),
+                                        child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<int>(
+                                                value: platform,
+                                                items: [
+                                                  DropdownMenuItem<int>(
+                                                    child: Icon(
+                                                        Icons.desktop_windows),
+                                                    value: 5,
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    child: Icon(xbox),
+                                                    value: 1,
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    child: Icon(ps),
+                                                    value: 2,
+                                                  )
+                                                ],
+                                                onChanged: (p) {
+                                                  print('Changed to $p');
+                                                  setState(() {
+                                                    platform = p;
+                                                  });
+                                                })),
                                       ),
-                                    )),
-                                contentPadding: EdgeInsets.only(
-                                    left: 24.0, top: 16.0),
-                                hintText: 'Player Name',
-                                hintStyle: TextStyle(fontSize: 14.0)),
-                          ),
+                                      suffixIcon: Parallelogram(
+                                          cutLength: 15.0,
+                                          child: MaterialButton(
+                                            onPressed: () async {
+                                              setState(() {
+                                                _progressHUD.state.show();
+                                              });
+
+                                              await _getPlayerStats(
+                                                  _controller.text,
+                                                  platform,
+                                                  context);
+                                              setState(() {
+                                                _progressHUD.state.dismiss();
+                                              });
+                                            },
+                                            color: Colors.amber,
+                                            child: Text(
+                                              'Search',
+                                              style: TextStyle(fontSize: 14.0),
+                                            ),
+                                          )),
+                                      contentPadding: EdgeInsets.only(
+                                          left: 24.0, top: 16.0),
+                                      hintText: 'Player Name',
+                                      hintStyle: TextStyle(fontSize: 14.0)),
+                                ),
+                              )),
                         )),
-                  )),
-              Container(
-                  child: GamespotArticles(
-                    gamespotArticles: gamespotArticles,
-                  ))
-            ],
-            controller: _tabController,
-          ),
-        ),
-        Container(
-          margin: EdgeInsets.only(top: 24.0),
-          child: Card(
-            color: Color(0xFFbd3d3d),
-            child: TabBar(
-              labelColor: Colors.white,
-              indicatorColor: Colors.white,
-              controller: _tabController,
-              tabs: <Widget>[
-                Tab(
-                  text: 'Find Players',
+                    Container(
+                        child: GamespotArticles(
+                      gamespotArticles: gamespotArticles,
+                    ))
+                  ],
+                  controller: _tabController,
                 ),
-                Tab(
-                  text: 'Browse Articles',
-                )
-              ],
-            ),
-          ),
-        ),
-        _progressHUD
-      ],
-    )
-        : FlareActor("assets/splash.flr", alignment:Alignment.center, fit:BoxFit.cover, animation:"intro");
+              ),
+              Container(
+                margin: EdgeInsets.only(top: 24.0),
+                child: Card(
+                  color: Color(0xFFbd3d3d),
+                  child: TabBar(
+                    labelStyle: Theme.of(context).textTheme.subtitle.copyWith(fontSize: 14),
+                    labelColor: Colors.white,
+                    indicatorColor: Colors.white,
+                    controller: _tabController,
+                    tabs: <Widget>[
+                      Tab(
+                        text: 'Find Players',
+                      ),
+                      Tab(
+                        text: 'Browse Articles',
+                      )
+                    ],
+                  ),
+                ),
+              ),
+              _progressHUD
+            ],
+          )
+        : FlareActor("assets/splash.flr",
+            alignment: Alignment.center, fit: BoxFit.cover, animation: "intro");
   }
 }
 
@@ -349,31 +371,56 @@ class GamespotArticles extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(top: 56.0),
+      margin: EdgeInsets.only(top: MediaQuery.of(context).size.height / 8),
       child: ListView.separated(
         itemCount: gamespotArticles.length,
+        padding: EdgeInsets.symmetric(horizontal: 8.0),
         itemBuilder: (BuildContext context, int index) {
-          return new ListTile(
-            onTap: () async {
-              final url = gamespotArticles[gamespotArticles.length - 1 - index]['site_detail_url'];
-              if (await canLaunch(url)) {
-                await launch(url);
-              } else {
-                Scaffold.of(context).showSnackBar(SnackBar(
-                    content: Text('Could not open article, try again later!')));
-              }
-            },
-            leading: CircleAvatar(
-              radius: MediaQuery.of(context).orientation == Orientation.portrait ? 40.0 : 20.0,
-              child: Image.network(
-                gamespotArticles[gamespotArticles.length - 1 - index]['image']['square_small'],
-                fit: BoxFit.scaleDown,
+          return Container(
+            child: Container(
+              child: ListTile(
+                onTap: () async {
+                  final url =
+                      gamespotArticles[gamespotArticles.length - 1 - index]
+                          ['site_detail_url'];
+                  if (await canLaunch(url)) {
+                    await launch(url);
+                  } else {
+                    Scaffold.of(context).showSnackBar(SnackBar(
+                        content:
+                            Text('Could not open article, try again later!')));
+                  }
+                },
+                title: Text(
+                  gamespotArticles[gamespotArticles.length - 1 - index]
+                      ['title'],
+                  style: Theme.of(context).textTheme.title,
+                ),
+                subtitle: Text(
+                  gamespotArticles[gamespotArticles.length - 1 - index]
+                      ['publish_date'],
+                  style: Theme.of(context).textTheme.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                color: Colors.black54,
               ),
             ),
-            title: Text(gamespotArticles[gamespotArticles.length - 1 - index]['title']),
-            subtitle: Text(gamespotArticles[gamespotArticles.length - 1 - index]['publish_date'] +
-                '\n' +
-                gamespotArticles[index]['deck']),
+            decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: FadeInImage(
+                    placeholder: Image.asset('assets/background.png').image,
+                    image: Image.network(
+                      gamespotArticles[gamespotArticles.length - 1 - index]
+                      ['image']['original'],
+                    ).image,
+                  ).image,
+                  fit: BoxFit.cover,
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(8.0))),
           );
         },
         separatorBuilder: (BuildContext context, int index) {
