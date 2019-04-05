@@ -1,220 +1,49 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-
-import 'package:clippy_flutter/clippy_flutter.dart';
 import 'package:progress_hud/progress_hud.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flare_flutter/flare_actor.dart';
-
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:http/http.dart' as http;
 
-final xbox = IconData(0xe800, fontFamily: 'Xbox');
-final ps = IconData(0xe801, fontFamily: 'Playstation');
+var aR = Color(0xFFbd3d3d);
+var _w = Colors.white;
+var _tC;
+var _m = MainAxisAlignment.spaceBetween;
 
-final platforms = {5: 'PC', 2: 'PS4', 1: 'XBOX'};
-TabController _tabController;
+_e(c) => EdgeInsets.all(c);
 
-void main() => runApp(MaterialApp(
+main() => runApp(MaterialApp(
       theme: ThemeData(
-          primaryColor: Color(0xFFE5E1D8),
+          primaryColor: aR,
           textTheme: TextTheme(
-              title: TextStyle(
-                  fontFamily: 'Teko',
-                  fontSize: 28,
-                  shadows: [
-                    Shadow(
-                        offset: Offset(1, 1),
-                        blurRadius: 0.0,
-                        color: Colors.white30)
-                  ],
-                  color: Colors.white),
+              title: TextStyle(fontFamily: 'Teko', fontSize: 28, color: _w),
               subtitle: TextStyle(
-                  fontFamily: 'OpenSans',
-                  fontSize: 16,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                        offset: Offset(1, 1),
-                        blurRadius: 0.0,
-                        color: Colors.white30)
-                  ]))),
-      home: Scaffold(
-        body: H(),
-      ),
+                fontFamily: 'OpenSans',
+                fontSize: 16,
+                color: _w,
+              ))),
+      home: S(),
     ));
 
-class H extends StatefulWidget {
-  _H createState() => new _H();
+class S extends StatefulWidget {
+  _S createState() => _S();
 }
 
-class _H extends State<H> with SingleTickerProviderStateMixin {
-  final TextEditingController _controller = new TextEditingController();
-
-  ProgressHUD _progressHUD;
-  int platform = 5;
-  bool _ready = false;
-
-  List<dynamic> gamespotArticles;
-
-  Future<void> _getPlayerStats(
-      String playerName, int platform, BuildContext context) async {
-    FocusScope.of(context).requestFocus(new FocusNode());
-    print('Gathering data for $playerName');
-
-    final response = await http.get(
-        'https://public-api.tracker.gg/apex/v1/standard/profile/$platform/$playerName',
-        headers: {
-          'TRN-Api-Key': '3ac4362a-8357-4855-89aa-c3c7444382ca'
-        }).timeout(const Duration(seconds: 5));
-
-    final body = json.decode(response.body);
-    print(body);
-
-    if (body.keys.contains('errors') || body['data']['children'].length == 0) {
-      Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text(
-            'Couldn\'t Find Stats for $playerName on ${platforms[platform]}'),
-      ));
-    } else {
-      Navigator.of(context).push(new MaterialPageRoute(builder: (context) {
-        return PlayerDetails(
-          json: body,
-        );
-      }));
-    }
-  }
-
-  Future<void> _gatherGamespotArticles() async {
-    final response = await http.get(
+class _S extends State with SingleTickerProviderStateMixin {
+  _gA() async {
+    final r = await http.get(
         'https://www.gamespot.com/api/articles/?api_key=247c3e174dbfcc32ba1251b9b45fdf4af37cd7c8&filter=title%3Aapex%20legends&format=json');
-//        .timeout(const Duration(seconds: 5));
-
-    final body = json.decode(response.body);
-    gamespotArticles = body['results'];
-
     Future.delayed(Duration(seconds: 2)).then((_) {
-      setState(() {
-        _ready = true;
-      });
-    });
-  }
-
-  @override
-  void initState() {
-    _progressHUD = new ProgressHUD(
-      color: Colors.white,
-      loading: false,
-      containerColor: Color(0xFFbd3d3d),
-      borderRadius: 5.0,
-      text: 'Loading...',
-    );
-
-    _tabController = new TabController(length: 2, vsync: this);
-
-    _gatherGamespotArticles();
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _ready
-        ? Stack(
-            children: <Widget>[
-              Container(
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: Image.asset('assets/background.png').image,
-                        fit: BoxFit.cover)),
-                width: MediaQuery.of(context).size.width,
-                child: TabBarView(
-                  children: [
-                    Container(
-                        margin: EdgeInsets.only(top: 16.0),
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Center(
-                          child: Parallelogram(
-                              cutLength: 15.0,
-                              child: Container(
-                                color: Colors.white,
-                                child: TextField(
-                                  controller: _controller,
-                                  decoration: InputDecoration(
-                                      prefixIcon: Padding(
-                                        padding: EdgeInsets.only(
-                                            left: 24.0, right: 8.0),
-                                        child: DropdownButtonHideUnderline(
-                                            child: DropdownButton<int>(
-                                                value: platform,
-                                                items: [
-                                                  DropdownMenuItem<int>(
-                                                    child: Icon(
-                                                        Icons.desktop_windows),
-                                                    value: 5,
-                                                  ),
-                                                  DropdownMenuItem(
-                                                    child: Icon(xbox),
-                                                    value: 1,
-                                                  ),
-                                                  DropdownMenuItem(
-                                                    child: Icon(ps),
-                                                    value: 2,
-                                                  )
-                                                ],
-                                                onChanged: (p) {
-                                                  print('Changed to $p');
-                                                  setState(() {
-                                                    platform = p;
-                                                  });
-                                                })),
-                                      ),
-                                      suffixIcon: Parallelogram(
-                                          cutLength: 15.0,
-                                          child: MaterialButton(
-                                            onPressed: () async {
-                                              setState(() {
-                                                _progressHUD.state.show();
-                                              });
-
-                                              await _getPlayerStats(
-                                                  _controller.text,
-                                                  platform,
-                                                  context);
-                                              setState(() {
-                                                _progressHUD.state.dismiss();
-                                              });
-                                            },
-                                            color: Colors.amber,
-                                            child: Text(
-                                              'Search',
-                                              style: TextStyle(fontSize: 14.0),
-                                            ),
-                                          )),
-                                      contentPadding: EdgeInsets.only(
-                                          left: 24.0, top: 16.0),
-                                      hintText: 'Player Name',
-                                      hintStyle: TextStyle(fontSize: 14.0)),
-                                ),
-                              )),
-                        )),
-                    Container(
-                        child: GamespotArticles(
-                      gamespotArticles: gamespotArticles,
-                    ))
-                  ],
-                  controller: _tabController,
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.only(top: 24.0),
-                child: Card(
-                  color: Color(0xFFbd3d3d),
-                  child: TabBar(
-                    labelStyle: Theme.of(context).textTheme.subtitle.copyWith(fontSize: 14),
-                    labelColor: Colors.white,
-                    indicatorColor: Colors.white,
-                    controller: _tabController,
-                    tabs: <Widget>[
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => Scaffold(
+                appBar: AppBar(
+                  backgroundColor: aR,
+                  title: Text(
+                    'Apex Legends Companion',
+                  ),
+                  bottom: TabBar(
+                    indicatorColor: _w,
+                    tabs: [
                       Tab(
                         text: 'Find Players',
                       ),
@@ -222,88 +51,173 @@ class _H extends State<H> with SingleTickerProviderStateMixin {
                         text: 'Browse Articles',
                       )
                     ],
+                    controller: _tC,
                   ),
                 ),
-              ),
-              _progressHUD
-            ],
-          )
-        : FlareActor("assets/splash.flr",
-            alignment: Alignment.center, fit: BoxFit.cover, animation: "intro");
+                body: H(gA: json.decode(r.body)['results']),
+              )));
+    });
   }
+
+  initState() {
+    _tC = TabController(length: 2, vsync: this);
+    _gA();
+    super.initState();
+  }
+
+  build(c) => Scaffold(
+          body: Stack(
+        children: [
+          Image.asset(
+            'assets/s.png',
+            fit: BoxFit.cover,
+            width: double.infinity,
+          ),
+        ],
+      ));
 }
 
-class PlayerDetails extends StatefulWidget {
-  PlayerDetails({this.json});
+class H extends StatefulWidget {
+  H({this.gA});
 
-  final json;
+  final gA;
 
-  _PlayerDetailsState createState() => new _PlayerDetailsState(json: json);
+  _H createState() => _H(gA: gA);
 }
 
-class _PlayerDetailsState extends State<PlayerDetails> {
-  _PlayerDetailsState({this.json});
+class _H extends State {
+  _H({this.gA});
 
-  final Map<String, dynamic> json;
+  final _c = TextEditingController();
+  final gA;
+  ProgressHUD _pH;
+  int pf = 5;
 
-  @override
-  Widget build(BuildContext context) {
-    Map<String, dynamic> champion = {};
+  _gP(pN, pf, c) async {
+    FocusScope.of(c).requestFocus(FocusNode());
+    final r = await http.get(
+        'https://public-api.tracker.gg/apex/v1/standard/profile/5/$pN',
+        headers: {
+          'TRN-Api-Key': '3ac4362a-8357-4855-89aa-c3c7444382ca'
+        }).timeout(Duration(seconds: 10));
+    final b = json.decode(r.body);
+    if (b.keys.contains('errors') || b['data']['children'].length == 0) {
+      Scaffold.of(c).showSnackBar(SnackBar(
+        content: Text('Couldn\'t Find Stats for $pN on PC'),
+      ));
+    } else {
+      Navigator.of(c).push(MaterialPageRoute(
+          builder: (_) => P(
+                j: b,
+              )));
+    }
+  }
 
-    for (Map<String, dynamic> hero in json['data']['children']) {
-      print(hero.toString());
-      if (hero['metadata']['legend_name'] != 'Unknown') {
-        champion = hero;
-        print('Champion: ${champion.toString()}');
+  initState() {
+    _pH = ProgressHUD(
+      color: _w,
+      loading: false,
+      containerColor: aR,
+      borderRadius: 5.0,
+      text: 'Loading...',
+    );
+    super.initState();
+  }
+
+  build(c) => Stack(
+        children: [
+          Container(
+            padding: _e(8.0),
+            decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage('assets/b.png'), fit: BoxFit.cover)),
+            child: TabBarView(
+              children: [
+                Center(
+                  child: Container(
+                    color: _w,
+                    child: TextField(
+                      controller: _c,
+                      decoration: InputDecoration(
+                        suffixIcon: MaterialButton(
+                          onPressed: () async {
+                            setState(() => _pH.state.show());
+                            await _gP(_c.text, pf, c);
+                            setState(() => _pH.state.dismiss());
+                          },
+                          color: Color(0xFFed6929),
+                          child: Text(
+                            'Search',
+                            style: TextStyle(color: _w),
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.only(left: 16.0, top: 16.0),
+                        hintText: 'Player Name',
+                      ),
+                    ),
+                  ),
+                ),
+                G(
+                  gA: gA,
+                )
+              ],
+              controller: _tC,
+            ),
+          ),
+          _pH
+        ],
+      );
+}
+
+class P extends StatelessWidget {
+  P({this.j});
+
+  final j;
+
+  build(c) {
+    var ch = {};
+    for (var h in j['data']['children']) {
+      if (h['metadata']['legend_name'] != 'Unknown') {
+        ch = h['metadata'];
         break;
       }
     }
-
     return Scaffold(
+      appBar: AppBar(),
       body: Stack(
-        children: <Widget>[
-          AspectRatio(
-            aspectRatio: MediaQuery.of(context).size.width /
-                MediaQuery.of(context).size.height,
-            child: Image.asset(
-              'assets/background.png',
-              fit: BoxFit.cover,
-            ),
+        children: [
+          Image.asset(
+            'assets/b.png',
+            width: double.infinity,
+            fit: BoxFit.cover,
           ),
           SingleChildScrollView(
             child: Column(
-              children: <Widget>[
+              children: [
                 Stack(
-                  children: <Widget>[
-                    Image.network(
-                      champion['metadata']['bgimage'],
-                      fit: BoxFit.cover,
+                  children: [
+                    FadeInImage.assetNetwork(
+                      placeholder: 'assets/lpb.png',
+                      image: ch['bgimage'],
                     ),
-                    Align(
-                      alignment: Alignment.center,
+                    Center(
                       child: Transform(
                         transform: Matrix4.translationValues(0.0, 30.0, 0.0),
                         child: Column(
-                          children: <Widget>[
-                            Image.network(
-                              champion['metadata']['icon'],
-                              scale: 3.0,
-                              fit: BoxFit.cover,
+                          children: [
+                            FadeInImage.assetNetwork(
+                              placeholder: 'assets/lpp.png',
+                              image: ch['icon'],
+                              imageScale: 3.0,
+                              placeholderScale: 3.0,
                             ),
-                            Column(
-                              children: <Widget>[
-                                Text(
-                                  json['data']['metadata']
-                                      ['platformUserHandle'],
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(fontSize: 48.0),
-                                ),
-                                Text(
-                                  '${champion['metadata']['legend_name']} Main',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(fontSize: 16.0),
-                                )
-                              ],
+                            Text(
+                              j['data']['metadata']['platformUserHandle'],
+                              style: TextStyle(fontSize: 48.0),
+                            ),
+                            Text(
+                              '${ch['legend_name']} Main',
+                              style: TextStyle(fontSize: 18.0),
                             )
                           ],
                         ),
@@ -316,24 +230,23 @@ class _PlayerDetailsState extends State<PlayerDetails> {
                   height: 48.0,
                 ),
                 Column(
-                    children: json['data']['stats']
+                    children: j['data']['stats']
                         .map<Widget>(
                           (d) => Container(
-                                padding: EdgeInsets.all(16.0),
+                                padding: _e(16.0),
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: <Widget>[
+                                  mainAxisAlignment: _m,
+                                  children: [
                                     Text(
                                       '${d['metadata']['name']}:',
                                       style: TextStyle(
-                                          fontSize: 18.0,
+                                          fontSize: 20.0,
                                           fontWeight: FontWeight.bold),
                                     ),
                                     Text(
                                       d['displayValue'],
                                       style: TextStyle(
-                                        fontSize: 18.0,
+                                        fontSize: 20.0,
                                       ),
                                     )
                                   ],
@@ -344,91 +257,78 @@ class _PlayerDetailsState extends State<PlayerDetails> {
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.only(left: 8.0, top: 32.0),
-            child: CircleAvatar(
-              backgroundColor: Color(0xFFbd3d3d),
-              child: IconButton(
-                icon: Icon(Icons.arrow_back),
-                color: Colors.white,
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ),
-          )
         ],
       ),
     );
   }
 }
 
-class GamespotArticles extends StatelessWidget {
-  GamespotArticles({this.gamespotArticles});
+class G extends StatelessWidget {
+  G({this.gA});
 
-  final List<dynamic> gamespotArticles;
+  final gA;
 
-  @override
-  Widget build(BuildContext context) {
+  build(c) {
+    var l = gA.length;
     return Container(
-      margin: EdgeInsets.only(top: MediaQuery.of(context).size.height / 8),
-      child: ListView.separated(
-        itemCount: gamespotArticles.length,
-        padding: EdgeInsets.symmetric(horizontal: 8.0),
-        itemBuilder: (BuildContext context, int index) {
-          return Container(
-            child: Container(
-              child: ListTile(
-                onTap: () async {
-                  final url =
-                      gamespotArticles[gamespotArticles.length - 1 - index]
-                          ['site_detail_url'];
-                  if (await canLaunch(url)) {
-                    await launch(url);
-                  } else {
-                    Scaffold.of(context).showSnackBar(SnackBar(
-                        content:
-                            Text('Could not open article, try again later!')));
-                  }
-                },
-                title: Text(
-                  gamespotArticles[gamespotArticles.length - 1 - index]
-                      ['title'],
-                  style: Theme.of(context).textTheme.title,
+        child: StaggeredGridView.countBuilder(
+      crossAxisCount: 4,
+      itemCount: l,
+      itemBuilder: (c, i) => Card(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: FadeInImage.assetNetwork(
+                    placeholder: 'assets/l.png',
+                    image: gA[l - 1 - i]['image']['original'],
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                subtitle: Text(
-                  gamespotArticles[gamespotArticles.length - 1 - index]
-                      ['publish_date'],
-                  style: Theme.of(context).textTheme.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                color: Colors.black54,
-              ),
+                Positioned.fill(
+                    child: Container(
+                  padding: _e(16.0),
+                  child: InkWell(
+                    onTap: () async {
+                      final u = gA[l - 1 - i]['site_detail_url'];
+                      if (await canLaunch(u)) {
+                        await launch(u);
+                      } else {
+                        Scaffold.of(c).showSnackBar(SnackBar(
+                            content: Text(
+                                'Could not open article, try again later!')));
+                      }
+                    },
+                    child: Column(
+                      mainAxisAlignment: _m,
+                      children: [
+                        Text(
+                          gA[l - 1 - i]['title'],
+                          style: Theme.of(c).textTheme.title,
+                        ),
+                        Row(
+                          mainAxisAlignment: _m,
+                          children: [
+                            Text(
+                              gA[l - 1 - i]['publish_date'],
+                              style: Theme.of(c).textTheme.subtitle,
+                            ),
+                            Icon(
+                              Icons.open_in_new,
+                              color: _w,
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                  ),
+                ))
+              ],
             ),
-            decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: FadeInImage(
-                    placeholder: Image.asset('assets/background.png').image,
-                    image: Image.network(
-                      gamespotArticles[gamespotArticles.length - 1 - index]
-                      ['image']['original'],
-                    ).image,
-                  ).image,
-                  fit: BoxFit.cover,
-                ),
-                borderRadius: BorderRadius.all(Radius.circular(8.0))),
-          );
-        },
-        separatorBuilder: (BuildContext context, int index) {
-          return Divider(
-            color: Colors.transparent,
-          );
-        },
-      ),
-    );
+          ),
+      staggeredTileBuilder: (_) => StaggeredTile.count(4, 2),
+    ));
   }
 }
