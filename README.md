@@ -33,3 +33,7 @@ The only dart file is **lib/main.dart**, so executing **flutter run main.dart --
 
 # DEMO
 <img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/1.png" width="400" height="790">
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/2.png" width="400" height="790">
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/3.png" width="400" height="790">
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/4.png" width="400" height="790">
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/5.png" width="400" height="790">
