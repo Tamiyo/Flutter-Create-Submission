@@ -32,8 +32,8 @@ The only dart file is **lib/main.dart**, so executing **flutter run main.dart --
 - Account Linking
 
 # DEMO
-![Home Page](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/1.png =270x540)
-![Search Page](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/2.png =270x540)
-![Player Page 1](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/3.png =270x540)
-![Player Page 2](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/4.png =270x540)
-![Article Page](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/5.png =270x540)
+![Home Page](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/1.png){:height="30%" width="30%"}
+![Search Page](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/2.png){:height="30%" width="30%"}
+![Player Page 1](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/3.png){:height="30%" width="30%"}
+![Player Page 2](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/4.png){:height="30%" width="30%"}
+![Article Page](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/5.png){:height="30%" width="30%"}
