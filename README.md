@@ -30,3 +30,10 @@ The only dart file is **lib/main.dart**, so executing **flutter run main.dart --
 - More article sources
 - Better UI options (Stacking Widgets)
 - Account Linking
+
+# DEMO
+![Home Page](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/1.png)
+![Search Page](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/2.png)
+![Player Page 1](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/3.png)
+![Player Page 2](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/4.png)
+![Article Page](https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/5.png)
