@@ -1,4 +1,5 @@
 #### Created By Matthew McMillian
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/logo.png" width="512" height="512">
 
 # Description
 This app is a companion app for the videogame [Apex Legends](https://www.ea.com/games/apex-legends).
@@ -30,3 +31,10 @@ The only dart file is **lib/main.dart**, so there should be no special instructi
 - More article sources
 - Better UI options (Stacking Widgets)
 - Account Linking
+
+# DEMO
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/1.png" width="400" height="790">
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/2.png" width="400" height="790">
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/3.png" width="400" height="790">
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/4.png" width="400" height="790">
+<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/demo/5.png" width="400" height="790">
