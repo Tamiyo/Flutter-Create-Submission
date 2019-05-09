@@ -1,5 +1,6 @@
+<div style="text-align:center"><img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/logo.png" width="512" height="512"></div>
 #### Created By Matthew McMillian
-<img src="https://github.com/Tamiyo/Flutter-Create-Submission/blob/master/assets/logo.png" width="512" height="512">
+
 
 # Description
 This app is a companion app for the videogame [Apex Legends](https://www.ea.com/games/apex-legends).
