@@ -1,4 +1,5 @@
 #### Created By Matthew McMillian
+<img src="https://s3.amazonaws.com/accredible-api-badge/155733979689.png" width="512" height="512">
 
 # Description
 This app is a companion app for the videogame [Apex Legends](https://www.ea.com/games/apex-legends).
