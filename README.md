@@ -17,7 +17,7 @@ Tested Using:
 - Flutter 1.3.9-pre.17 • channel master
 
 # Running the Application
-The only dart file is **lib/main.dart**, so executing **flutter run main.dart --release** from the home directory should be all you need to run the application!
+The only dart file is **lib/main.dart**, so there should be no special instructions.
 
 # Sample Search Queries
 *These queries are **NOT** case sensitive*
